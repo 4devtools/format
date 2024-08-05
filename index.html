@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- saved from url=(0014)about:internet -->
+<html id="ext-gen6" class=" ext-strict x-viewport">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="google-adsense-account" content="ca-pub-5035319374320902">
+	
+<title>Online JSON Viewer and Formatter</title>
+<meta name="description" content="JSON Viewer and Formatter - Convert JSON Strings to a Friendly Readable Format">
+<meta name="keywords" content="json, json viewer, json formatter">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="./format_files/ext-gray-all.css" media="all">
+
+
+<script src="./format_files/f.txt"></script>
+<script src="./format_files/f(1).txt"></script><script>
+
+</script>
+<script src="./format_files/f(2).txt" crossorigin="anonymous" data-checked-head="true"></script>
+	<meta http-equiv="origin-trial" content="AlK2UR5SkAlj8jjdEc9p3F3xuFYlF6LYjAML3EOqw1g26eCwWPjdmecULvBH5MVPoqKYrOfPhYVL71xAXI1IBQoAAAB8eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="Amm8/NmvvQfhwCib6I7ZsmUxiSCfOxWxHayJwyU1r3gRIItzr7bNQid6O8ZYaE1GSQTa69WwhPC9flq/oYkRBwsAAACCeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVmlld1hSZXF1ZXN0ZWRXaXRoRGVwcmVjYXRpb24iLCJleHBpcnkiOjE3NTgwNjcxOTksImlzU3ViZG9tYWluIjp0cnVlfQ=="><meta http-equiv="origin-trial" content="A9uiHDzQFAhqALUhTgTYJcz9XrGH2y0/9AORwCSapUO/f7Uh7ysIzyszNkuWDLqNYg8446Uj48XIstBW1qv/wAQAAACNeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiRmxlZGdlQmlkZGluZ0FuZEF1Y3Rpb25TZXJ2ZXIiLCJleHBpcnkiOjE3Mjc4MjcxOTksImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A9R+gkZL3TWq+Z7RJ2L0c7ZN7FZD5z4mHmVvjrPitg/EMz9P3j5d3W7Vw5ZR9jtJGmWKltM4BO3smNzpCgwYuwwAAACTeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiRmxlZGdlQmlkZGluZ0FuZEF1Y3Rpb25TZXJ2ZXIiLCJleHBpcnkiOjE3Mjc4MjcxOTksImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9">
+<script type="text/javascript" src="./format_files/jsonviewer-all.js"></script>
+<style type="text/css" id="styleSheetIconCls">/* Ext.ux.iconCls */</style>
+
+<script>
+	function show_form()
+	{
+		document.getElementById("footer").style.display = "none";
+		document.getElementById("footer_form").style.visibility = "visible";
+	}
+
+    function valid_input()
+    {      
+      var re3 = /^\s*([a-zA-Z0-9\._\-\+]{1,100})@([a-zA-Z0-9\.\-_]){1,100}\.([a-zA-Z]{2,7})\s*$/gi;
+      
+      email = document.getElementById("bemail");
+
+		
+		emailvalue = email.value.toLowerCase();
+		var pos1 = emailvalue.indexOf("test");
+		var pos2 = emailvalue.indexOf("myemail@gmail.com");
+		if(pos1>=0 || pos2>=0)
+		{
+			alert('Please enter a valid email address');
+			return false;
+		}
+
+
+      if (email.value.length>=0 && !email.value.match(re3)) 
+      {
+        alert("Please enter a valid email address");
+        email.focus();
+        return false;
+      }
+      
+      return true;
+    }
+</script>
+
+<style type="text/css">
+	.fform{
+		display: inline-block;
+		width:700px;
+		text-align: left;
+		margin-top:5px;
+	}
+	.fform a, .fform a:visited, .fform a:hover
+	{
+		color: #0070e0;
+	}
+	.fform a:hover
+	{
+		color: #142c8e;
+	}
+
+.myinput, .mybutton, .getbutton, .paybutton{
+	float:left;
+	padding:13px 8px;
+	font-size:18px;
+	border-radius: 5px;
+	text-align: left;
+	margin:3px 5px 0 0;
+
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    -ms-appearance:none;
+    -o-appearance:none;
+    appearance:none;
+}
+.mybutton, .getbutton, .paybutton{
+	width:195px;
+	cursor: pointer;
+	color:white;
+	background-color:#f1641e;
+	border:1px solid white;
+	text-align: center;
+}
+.mybutton:hover, .getbutton:hover, .paybutton:hover{
+	border:1px solid white;
+	
+	background: rgb(254,172,94);
+	background: -moz-linear-gradient(90deg, rgba(254,172,94,1) 0%, rgba(199,121,208,1) 50%, rgba(75,192,200,1) 100%);
+	background: -webkit-linear-gradient(90deg, rgba(254,172,94,1) 0%, rgba(199,121,208,1) 50%, rgba(75,192,200,1) 100%);
+	background: linear-gradient(90deg, rgba(254,172,94,1) 0%, rgba(199,121,208,1) 50%, rgba(75,192,200,1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#feac5e",endColorstr="#4bc0c8",GradientType=1);
+}
+.myinput{
+	width:400px;
+	border:1px solid #f1641e;
+}
+.smalltext{
+	float:left;
+	width:450px;
+	font-size:14px;
+	margin-top:5px;
+	line-height: 16px;
+}
+
+	.footer, .footer_form
+	{
+		position: fixed; 
+		bottom: 0px;
+		width: 100%; 
+		text-align: center;
+		font-family: Arial;	
+
+		/*
+		background: rgb(254,172,94);
+		background: -moz-linear-gradient(90deg, rgba(254,172,94,1) 0%, rgba(199,121,208,1) 50%, rgba(75,192,200,1) 100%);
+		background: -webkit-linear-gradient(90deg, rgba(254,172,94,1) 0%, rgba(199,121,208,1) 50%, rgba(75,192,200,1) 100%);
+		background: linear-gradient(90deg, rgba(254,172,94,1) 0%, rgba(199,121,208,1) 50%, rgba(75,192,200,1) 100%);
+		filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#feac5e",endColorstr="#4bc0c8",GradientType=1);
+		*/
+		background:linear-gradient(180deg,transparent,hsla(0,0%,95%,.288) 47.39%),linear-gradient(89.84deg,rgba(230,36,174,.15) .14%,rgba(94,58,255,.15) 16.96%,rgba(10,136,255,.15) 34.66%,rgba(75,191,80,.15) 50.12%,rgba(137,206,0,.15) 66.22%,rgba(239,183,0,.15) 82%,rgba(246,73,0,.15) 99.9%),linear-gradient(0deg,hsla(0,0%,100%,.15),hsla(0,0%,100%,.15));
+	}
+	.footer{
+		padding: 2px 0;	}
+	.footer_form
+	{
+
+		visibility: hidden;
+
+		padding: 2px 0;
+		height:140px;
+	}
+	.support
+	{
+		
+		height:20px;
+		color: #222;
+		/*
+		background: linear-gradient(to right, orange , yellow, green, cyan, blue, violet);
+	  	-webkit-background-clip: text;
+	  	-webkit-text-fill-color: transparent;
+	  	font-size: 16px;
+	  	line-height: 16px;
+	  	*/
+	}
+	.support a, .support a:visited, .support a:hover
+	{
+		color: #00cc66;
+		font-weight: bold;
+	}
+	.support a:hover
+	{
+		color: #ffa400;
+	}
+	
+	a.logout, a.logout:visited, a.logout:hover
+	{
+		color: black;
+		text-decoration:none;
+	}
+	a.logout:hover
+	{
+		color: #ff0000;
+	}
+
+.error
+{
+	/*background-color:#fce0e0;*/
+	color:#f14443;
+	font-weight: bold;
+}
+.success
+{
+	/*background-color:#d8f2e6;*/
+	color:#0ab56b;
+	font-weight: bold;
+}
+
+.heart{
+    width: 16px;
+    height: 16px;
+    vertical-align: -2px;
+    fill: #f00;
+}
+
+	.br0 {color:#090} .st0 {color:#36C} .sy0 {color:#393} .x-viewport,.x-viewport body{height:calc(100% - 72px);} body{background-color:#ededed;}
+</style>
+<!--    <script async="" src="./format_files/ca-pub-5595808001740123"></script> -->
+<!--    <script async="" src="./format_files/AGSKWxWznxW6eBK1VN1ksWSmIT3lW5j9FqKY34ilWm_XYRHsr_qVjsmF30bYxYRSquvCR-OH94EfZ-wsnLYvM50r5LMAo3OXr63ZHf4tmSDYyG-ah__7SOQ3Az7AutdaUZ4uc-fmo6anTQ=="></script>  -->
+<!--	<script async="" src="./format_files/AGSKWxVoEZqxJYnIZOYjvfFUh5S7LRiachtwjVY05am8Dor9KPS3noX1msCQCoNW3XRniqH8kBj99R7LGr66PaKVPPrZjEeOjHwBSWFz_hmNVUkTigpccTTEn29dXEviX5-cU-sQQTgQtA=="></script>  -->
+<!--	<script async="" src="./format_files/AGSKWxXAhVRglzP6zCQqF8LkNi7sJoTM2Us348zSqr6I6rEiW-4jR4942Ux4TBH0u7t-lggj0ZG9af1cPzx3hIZ6BFGy7MOP-ciIEwQn0EF0a3joPfJvgFdDnu2mQkdsdUVlqAycQVHnaA=="></script>  -->
+<!--	<script async="" src="./format_files/AGSKWxUb1fDnTs3m3ziqX2xlUGetdBExv8fwl66QZrP4nJv3b-yhQXvWBTCFux1Fy4GdYMCUZ6d0iV4juZkA_waQGz0IM1_2uFWzDYxAtjoAyHpacLYX2pIHn9Fp8AwB_qVzfocuWHU5og=="></script>  -->
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5035319374320902"    crossorigin="anonymous"></script>
+
+</head>
+
+<body onload="page_begin();" class="  ext-safari ext-linux" id="ext-gen11"><div id="ext-comp-1004" class="x-tab-panel" style="width: 520px;">
+	<div class="x-tab-panel-header x-unselectable" id="ext-gen23" style="width: 518px;">
+		<div class="x-tab-strip-wrap" id="ext-gen27"><ul class="x-tab-strip x-tab-strip-top" id="ext-gen29">
+			<li class="" id="ext-comp-1004__viewerPanel"><a class="x-tab-strip-close" onclick="return false;"></a>
+				<a class="x-tab-right" href="https://4devtools.github.io/formatjson/#" onclick="return false;"><em class="x-tab-left">
+					<span class="x-tab-strip-inner"><span class="x-tab-strip-text ">Viewer</span></span></em></a></li><li class=" x-tab-strip-active" id="ext-comp-1004__textPanel"><a class="x-tab-strip-close" onclick="return false;"></a><a class="x-tab-right" href="https://4devtools.github.io/formatjson/#" onclick="return false;"><em class="x-tab-left"><span class="x-tab-strip-inner"><span class="x-tab-strip-text ">Text</span></span></em></a></li><li class="x-tab-edge" id="ext-gen30"></li><div class="x-clear" id="ext-gen31"></div></ul></div><div class="x-tab-strip-spacer" id="ext-gen28"></div></div><div class="x-tab-panel-bwrap" id="ext-gen24"><div class="x-tab-panel-body x-tab-panel-body-top" id="ext-gen25" style="width: 518px; height: 561px;"><div id="textPanel" class="x-panel x-panel-noborder" style="width: 518px;"><div class="x-panel-bwrap" id="ext-gen38"><div class="x-panel-tbar x-panel-tbar-noheader x-panel-tbar-noborder" id="ext-gen39"><div id="ext-comp-1013" class="x-toolbar x-small-editor"><table cellspacing="0"><tbody><tr><td id="ext-gen42"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn" id="ext-comp-1014" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen44">Paste</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td><td id="ext-gen50"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn" id="ext-comp-1015" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen52">Copy</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td><td><span class="ytb-sep" id="ext-gen58"></span></td><td id="ext-gen59"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn" id="ext-comp-1016" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen61">Format</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td><td id="ext-gen67"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn " id="ext-comp-1017" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen69">Remove white space</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td><td><span class="ytb-sep" id="ext-gen75"></span></td><td id="ext-gen76"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn" id="ext-comp-1018" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen78">Clear</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td><td><span class="ytb-sep" id="ext-gen84"></span></td><td id="ext-gen85"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn" id="ext-comp-1019" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen87">Load JSON data</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td><td style="width: 100%;"><div class="ytb-spacer" id="ext-gen93"></div></td><td id="ext-gen94"><table border="0" cellpadding="0" cellspacing="0" class="x-btn-wrap x-btn" id="ext-comp-1020" style="width: auto;"><tbody><tr><td class="x-btn-left"><i>&nbsp;</i></td><td class="x-btn-center"><em unselectable="on"><button class="x-btn-text" type="button" id="ext-gen96">About</button></em></td><td class="x-btn-right"><i>&nbsp;</i></td></tr></tbody></table></td></tr></tbody></table></div></div><div class="x-panel-body x-panel-body-noheader x-panel-body-noborder" id="ext-gen40" style="width: 518px; height: 514px;"><textarea style="width: 510px; height: 508px; font-family: monospace;" autocomplete="off" id="edit" name="edit" class=" x-form-textarea x-form-field "></textarea></div><div class="x-panel-bbar x-panel-bbar-noborder" id="ext-gen41"><div id="ext-comp-1021" class="x-toolbar x-small-editor"><table cellspacing="0"><tbody><tr><td><span class="ytb-sep" id="ext-gen102"></span></td></tr></tbody></table></div></div></div></div></div></div></div>
+<h1 style="margin-top:150px;">Online JSON Viewer</h1>
+
+<div class="tab">
+	<h2>Sobre JSON</h2>
+	<div>
+		<b>JSON</b>, abreviação de <b>JavaScript Object Notation</b> (Notação de Objetos JavaScript), é um formato de intercâmbio de dados leve. JSON é um formato baseado em texto, legível por humanos, para representar estruturas de dados simples e arrays associativos (chamados de objetos).<br><br>
+		Leia mais: <a href="http://json.org/" target="_blank">json.org</a>, <a href="http://en.wikipedia.org/wiki/JSON" target="_blank">wikipedia</a>, <a href="http://www.google.com/search?q=json" target="_blank">google</a><br><br>
+		
+        No JSON, eles assumem as seguintes formas: objeto, array, valor, string e número.<br><br>
+        
+        <h3 style="color:red;">Velocidade de carregamento lenta</h3>
+        Vários usuários relataram uma velocidade de carregamento lenta no Chrome, mas não consegui descobrir o motivo. Se você tiver alguma pista, por favor, <a href="https://contact.do/jsonviewer" target="_blank">entre em contato</a>.<br><br>
+        Fiz alguns testes e parece que a velocidade de carregamento no Firefox está boa, então, por favor, tente usar isso até resolvermos o problema. Obrigado!<br><br>
+        
+        <h3>Preocupações com a segurança:</h3>
+        - O código JSON inserido por nossos usuários não é salvo no servidor. Na verdade, o site nem mesmo possui um banco de dados<br>
+        - Nosso site usa HTTPS, então todo o tráfego entre o cliente e nosso servidor é criptografado<br>
+        - Nosso serviço está em funcionamento desde 2008 e é confiável por mais de 500.000 usuários todos os meses<br><br>
+        
+        Para qualquer dúvida ou problema, por favor, <a href="https://contact.do/jsonviewer" target="_blank">entre em contato</a>
+	</div>
+</div>
+
+<div class="tab">
+	<h2>Example</h2>
+	<div>
+
+<pre><span class="br0">{</span>
+    <span class="st0">"firstName"</span><span class="sy0">:</span> <span class="st0">"John"</span><span class="sy0">,</span>
+    <span class="st0">"lastName"</span><span class="sy0">:</span> <span class="st0">"Smith"</span><span class="sy0">,</span>
+    <span class="st0">"gender"</span><span class="sy0">:</span> <span class="st0">"man"</span><span class="sy0">,</span>
+    <span class="st0">"age"</span><span class="sy0">:</span> <span class="st0">32</span><span class="sy0">,</span>
+    <span class="st0">"address"</span><span class="sy0">:</span> <span class="br0">{</span>
+        <span class="st0">"streetAddress"</span><span class="sy0">:</span> <span class="st0">"21 2nd Street"</span><span class="sy0">,</span>
+        <span class="st0">"city"</span><span class="sy0">:</span> <span class="st0">"New York"</span><span class="sy0">,</span>
+        <span class="st0">"state"</span><span class="sy0">:</span> <span class="st0">"NY"</span><span class="sy0">,</span>
+        <span class="st0">"postalCode"</span><span class="sy0">:</span> <span class="st0">"10021"</span>
+    <span class="br0">}</span><span class="sy0">,</span>
+    <span class="st0">"phoneNumbers"</span><span class="sy0">:</span> <span class="br0">[</span>
+        <span class="br0">{</span> <span class="st0">"type"</span><span class="sy0">:</span> <span class="st0">"home"</span><span class="sy0">,</span> <span class="st0">"number"</span><span class="sy0">:</span> <span class="st0">"212 555-1234"</span> <span class="br0">}</span><span class="sy0">,</span>
+        <span class="br0">{</span> <span class="st0">"type"</span><span class="sy0">:</span> <span class="st0">"fax"</span><span class="sy0">,</span> <span class="st0">"number"</span><span class="sy0">:</span> <span class="st0">"646 555-4567"</span> <span class="br0">}</span>
+    <span class="br0">]</span>
+<span class="br0">}</span></pre>
+
+	</div>
+</div>
+
+<div class="tab">
+	<h2>About Online JSON Viewer</h2>
+	<div>
+		JSON Viewer was created in 2008 as a side project and has become the largest project of it's kind. It allows users to convert JSON strings to a friendly readable format<br><br>
+		The application is using <a href="http://extjs.com/" target="_blank">Ext JS</a><br><br>
+        For any questions or problems please <a href="https://contact.do/jsonviewer" target="_blank">get in touch</a>
+	</div>
+</div>
+
+</html>
