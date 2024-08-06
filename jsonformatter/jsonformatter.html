@@ -1,0 +1,500 @@
+<!-- this is for main jf.org -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta
+            charset="utf-8">
+        <meta http-equiv="X-UA-Compatible"
+            content="IE=edge">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1">
+        <meta
+            name="description"
+            content="Formatação e Visualização de JSON online">
+        <meta
+            name="author" content="JsonFormatter">
+        <meta name="keywords"
+            content="json formatter, json beautifier, json validator, online json formatter, json formatter online, json beautify,beautify json, ,format json, jsonlint, JSON Checker, JSON Cleaner, json converter, json format, json online format, format json online" />
+        <meta
+            property="og:title"
+            content="Formatação e Visualização de JSON" />
+        <meta
+            property="og:description"
+            content="Formatação e Visualização de JSON online" />
+        <meta
+            property="og:image"
+            content="./img/rectlogo.png" />
+        <meta
+            property="og:url" content="./" />
+        <meta
+            property="og:type" content="website" />
+        <link rel="canonical"
+            href="jsonformatter/index.html" />
+        <link rel="shortcut icon" type="image/png"
+            href="jsonformatter/img/favicon.png" />
+        <title>Best JSON Formatter and JSON
+            Validator: Online JSON Formatter
+        </title>
+
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+            rel="stylesheet">
+        <link href="jsonformatter/dist/3.7/css/jsonmain.css"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://a.pub.network/jsonformatter-org/cls.css">
+    </head>
+    <input type="hidden" id="viewname" value="index">
+    <input type="hidden" id="type"value="json">
+    <body id="page-top" class="index">
+        <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-B5DLV1F39J');
+        </script>
+        <input
+            id="default_file" type="file" name="userfile" />
+        <div id="pluswrap"
+            class="hide">
+            <div class="plus">
+                <button
+                    class="btn btn-lg btn-success">
+                <i
+                    class="fa fa-cog fa-spin"></i>
+                </button>
+            </div>
+        </div>
+        <nav
+            class="navbar navbar-default navbar-fixed-top">
+            <div
+                class="container">
+                <div class="navbar-header page-scroll">
+                    <button
+                        type="button" class="navbar-toggle"
+                        data-toggle="collapse"
+                        data-target="#bs-example-navbar-collapse-1">
+                    <span
+                        class="sr-only">Toggle navigation</span>
+                    <span
+                        class="icon-bar"></span>
+                    <span
+                        class="icon-bar"></span>
+                    <span
+                        class="icon-bar"></span>
+                    </button>
+                    <a
+                        class="navbar-brand" href="jsonformatter/index.html">
+                    <img
+                        src="jsonformatter/img/logo.webp.html" width="249px" height="39px"
+                        alt="4DevsBR"
+                        title="4DevsBR">
+                    </a>
+                </div>
+                <div
+                    class="collapse navbar-collapse"
+                    id="bs-example-navbar-collapse-1">
+                    <ul
+                        class="nav navbar-nav navbar-right">
+                        <li
+                            class="page-scroll">
+                            <a
+                                href="jsonformatter/index.html"
+                                rel="noopener" title="JSON Beautifier"
+                                target="_blank">JSON Beautifier</a>
+                        </li>
+                        <li
+                            class="page-scroll">
+                            <a
+                                href="http://localhost:8080/tools/4mat/index.html"
+                                rel="noopener" title="Simple JSON Beautifier"
+                                target="_blank">Simple JSON Beautifier</a>
+                        </li>
+                        <a
+                            data-toggle="dropdown" href="jsonformatter/index.html#">
+                            <li
+                                id="loginDropdown"
+                                class="dropdown cursor-pointer">
+                                <span
+                                    id="loggedUserName"></span>
+                                <span
+                                    class="caret"></span>
+                                <ul
+                                    class="dropdown-menu">
+                                    <li>
+                        <a target="_blank"
+                            href="jsonformatter/userSaveLinkPage/json.html">My
+                        Links</a>
+                        </li>
+                        <li>
+                        <a
+                            href="jsonformatter/index.html#"
+                            onclick="preLogout();">Logout</a>
+                        </li>
+                        </ul>
+                        </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div
+            id="flymessage" class="alert alert-danger flyover flyover-bottom">
+            <p> Copied to Clipboard </p>
+        </div>
+        <header>
+            <div
+                class="container container-no-padding">
+                <div class="row"
+                    id="headerDiv">
+                    <div class="col-sm-8" id="msgDiv"
+                        style="float: right;"></div>
+                </div>
+
+                <div class="row">
+                    <div id="inputdiv" class="col-lg-5">
+                        <div
+                            id="inputeditor" tabindex="-1"
+                            class="jsoneditor-manual"></div>
+                    </div>
+                    <div
+                        class="col-lg-2">
+                        <button type="button"
+                            class="btn btn-xs btn-outline btn-block"
+                            href="#loadFileDialog" data-toggle="modal"
+                            onclick="clearInput('loadFileDialog')"
+                            title="JSON URL or Browse File">Upload
+                        Data</button>
+                        <br>
+                        <button type="button"
+                            class="btn btn-xs btn-outline btn-block"
+                            onclick="validateJSON();"
+                            title="JSON Validator">Validate</button>
+                        <br>
+                        <div
+                            class="form-group">
+                            <select class="form-control"
+                                id="sel1">
+                                <option value="2"
+                                    selected="selected">2 Tab
+                                    Space
+                                </option>
+                                <option value="3">3 Tab
+                                    Space
+                                </option>
+                                <option value="4">4 Tab
+                                    Space
+                                </option>
+                            </select>
+                        </div>
+                        <button
+                            type="button" id="defaultaction"
+                            class="btn btn-xs btn-outline btn-block"
+                            onclick="beautifyJSON();"
+                            title="JSON Formatter">Format / Beautify</button>
+                        <div align="center" style="padding-top:5px"
+                            data-freestar-ad="__320x100 __300x250"
+                            id="jsonformatter_medrec_middle">
+                            <script
+                                data-cfasync="false"
+                                type="text/javascript">freestar.config.enabled_slots.push({ placementName: "jsonformatter_medrec_middle", slotId: "jsonformatter_medrec_middle" });</script>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-xs btn-outline btn-block"
+                            onclick="minifyJSON();"
+                            title="JSON Minify or JSON Compact">Minify /
+                        Compact</button>
+                        <br>
+                        <div class="dropdown">
+                            <button
+                                class="btn btn-xs btn-outline btn-block dropdown-toggle"
+                                type="button" data-toggle="dropdown">Convert
+                            JSON to
+                            <span class="caret"></span>
+                            </button>
+                            <ul
+                                class="btn btn-xs btn-outline btn-block dropdown-menu"
+                                style="background:#fff !important">
+                                <li>
+                                    <a
+                                        href="jsonformatter/index.html#"
+                                        onclick="jsonToxml();">JSON to
+                                    XML</a>
+                                </li>
+                                <li>
+                                    <a href="jsonformatter/index.html#"
+                                        onclick="jsonTocsv();">JSON to
+                                    CSV</a>
+                                </li>
+                                <li>
+                                    <a href="jsonformatter/index.html#"
+                                        onclick="jsonToyaml();">JSON to
+                                    YAML</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <br>
+                        <button
+                            type="button"
+                            class="btn btn-xs btn-outline btn-block hidden-xs"
+                            onclick="download();"
+                            title="JSON Download">Download</button>
+                        <br />
+                    </div>
+                    <div id="outputdiv"
+                        class="col-lg-5">
+                        <div id="outputeditor" tabindex="-1"
+                            class="jsoneditor-manual"></div>
+                    </div>
+                </div>
+            </div>
+            <div align="center"
+                data-freestar-ad="__336x280 __970x90"
+                id="jsonformatter_leaderboard_atf">
+                <script
+                    data-cfasync="false"
+                    type="text/javascript">freestar.config.enabled_slots.push({ placementName: "jsonformatter_leaderboard_atf", slotId: "jsonformatter_leaderboard_atf" });</script>
+            </div>            
+        </header>
+
+
+        <div
+            id="loadFileDialog" class="modal" role="dialog">
+            <div
+                class="modal-dialog">
+                <div
+                    class="modal-content">
+                    <div
+                        class="modal-header">
+                        <button
+                            type="button" class="close"
+                            data-dismiss="modal">&times;</button>
+                        <h4
+                            class="modal-title">Load External
+                            Data
+                        </h4>
+                    </div>
+                    <div
+                        class="modal-body text-center">
+                        <div
+                            class="form-group">
+                            <input
+                                type="text" class="form-control"
+                                id="path"
+                                placeholder="Enter Url"
+                                autofocus>
+                            <br>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-md"
+                                onclick="loadUrl();">Load
+                            URL</button>
+                        </div>
+                        <div
+                            class="col-lg-12 text-center">
+                            <hr
+                                class="star-primary">
+                        </div>
+                        <div
+                            class="form-group">
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-md"
+                                id="me"
+                                onclick="openFile();">Upload
+                            File</button>
+                        </div>
+                    </div>
+                    <div
+                        class="modal-footer">
+                        <button
+                            type="button" id="loadFileClose"
+                            class="btn btn-default"
+                            data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div
+            id="saveDialog" class="modal" role="dialog">
+            <input
+                type="hidden" id="id" value="1">
+            <input
+                type="hidden" id="dataUrl" value />
+            <div
+                class="modal-dialog">
+                <div
+                    class="modal-content">
+                    <div
+                        class="modal-header">
+                        <button
+                            type="button" class="close"
+                            data-dismiss="modal">&times;</button>
+                        <h4
+                            class="modal-title">Save
+                            Online
+                        </h4>
+                    </div>
+                    <div
+                        class="modal-body">
+                        <form
+                            name="sentMessage" id="contactForm"
+                            novalidate>
+                        <div
+                            class="row control-group">
+                            <div
+                                class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>Title</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    placeholder="Title"
+                                    id="title" required
+                                    data-validation-required-message="Please enter your title">
+                                <p
+                                    class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <div
+                            class="row control-group">
+                            <div
+                                class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>Tags</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    placeholder="Tags"
+                                    id="tags">
+                                <p
+                                    class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <div
+                            class="row control-group">
+                            <div
+                                class="form-group col-xs-12 floating-label-form-group controls">
+                                <label>Description</label>
+                                <textarea rows="5"
+                                    class="form-control"
+                                    placeholder="Description"
+                                    id="desc"></textarea>
+                                <p
+                                    class="help-block text-danger"></p>
+                            </div>
+                        </div>
+                        <br>
+                        <div
+                            class="row control-group">
+                            <div
+                                class="form-group col-xs-4">
+                                <span
+                                    class="lead">Link Expiry
+                                Time</span>
+                            </div>
+                            <div
+                                class="form-group col-xs-8">
+                                <select class="form-control"
+                                    id="expiryTime">
+                                    <option
+                                        value="60">1
+                                        Hour
+                                    </option>
+                                    <option
+                                        value="480">8
+                                        Hour
+                                    </option>
+                                    <option
+                                        value="1440"
+                                        selected="selected">24
+                                        Hours
+                                    </option>
+                                    <option
+                                        value="10080">7
+                                        Days
+                                    </option>
+                                    <option
+                                        value="21600">15
+                                        Days
+                                    </option>
+                                    <option
+                                        value="43200">30
+                                        Days
+                                    </option>
+                                    <option
+                                        value>Never</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="modal-footer">
+                        <button
+                            type="button" id="btnSave"
+                            class="btn btn-default"
+                            data-dismiss="modal"
+                            onclick="download();">Download</button>
+                        <button
+                            type="button" id="btnUpdate"
+                            class="btn btn-default"
+                            data-dismiss="modal"
+                            onclick="update();">Update</button>
+                        <button
+                            type="button"
+                            id="btnSaveAndShare"
+                            class="btn btn-default"
+                            data-dismiss="modal"
+                            onclick="save();">Save
+                        Online</button>
+                        <button
+                            type="button" id="loadSaveClose"
+                            class="btn btn-default"
+                            data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button
+            type="button" class="btn btn-info btn-lg hide"
+            data-toggle="modal" data-target="#saveDialog"
+            id="openSave">ErrorDialog</button>
+        <div
+            id="errorDialog" class="modal" role="dialog">
+            <div class="modal-dialog">
+                <div
+                    class="modal-content">
+                    <div
+                        class="modal-header">
+                        <button
+                            type="button" class="close"
+                            data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Message</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p
+                            id="errorMsg"></p>
+                    </div>
+                    <div
+                        class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn btn-default"
+                            data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button
+            type="button" id="openError"
+            class="btn btn-info btn-lg hide"
+            data-toggle="modal"
+            data-target="#errorDialog">ErrorDialog</button>
+
+        <script
+            src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script async
+            src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script
+            src="jsonformatter/dist/3.7/js/jsontools-min.js"></script>
+        <script></script>
+        <script>
+            (function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'8aeafa173c1c4cfd',t:'MTcyMjkwNDg0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+        </script>
+    </body>
+</html>
