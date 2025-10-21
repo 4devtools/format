@@ -94,10 +94,10 @@
     <label for="thresholdInput">Limiar de Ruído Mínimo (dB):</label>
     <input type="number" id="thresholdInput" value="30" min="0" max="100">
     <br>
-    <label for="toneInput">Tempo para Silêncio (segundos):</label>
+    <label for="silenceTimeInput">Tempo para Silêncio (segundos):</label>
     <input type="number" id="silenceTimeInput" value="1" min="0.1" step="0.1">
     <br>
-    <label for="toneInput">Tom do Alarme (mhz):</label>
+    <label for="toneInput">Tom do Alarme (Hz):</label>
     <input type="number" id="toneInput" value="440" min="0.1" step="1">
     <br>
     <label for="alarmFileInput">Selecionar Arquivo de Alarme (opcional):</label>
@@ -120,6 +120,7 @@
     let alarmCycleCount = 0;
     const maxAlarmCycles = 30;
     let silenceStartTime = null;
+    let isAlarmActive = false;
     const canvas = document.getElementById('volumeGraph');
     const ctx = canvas.getContext('2d');
 
@@ -134,6 +135,11 @@
       document.getElementById('status').textContent = 'Monitorando...';
 
       try {
+        // Verificar suporte ao getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Seu navegador não suporta acesso ao microfone. Use um navegador moderno como Chrome, Firefox ou Safari.');
+        }
+
         // Request microphone access
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -151,7 +157,8 @@
         // Start processing audio
         processAudio();
       } catch (err) {
-        document.getElementById('status').textContent = 'Erro ao acessar o microfone ou carregar áudio: ' + err.message;
+        console.error('Erro detalhado:', err);
+        document.getElementById('status').textContent = `Erro ao acessar o microfone ou carregar áudio: ${err.message}. Verifique se o site está em HTTPS e permita o acesso ao microfone.`;
         isMonitoring = false;
       }
     }
@@ -161,6 +168,7 @@
         const arrayBuffer = await file.arrayBuffer();
         alarmAudio = await audioContext.decodeAudioData(arrayBuffer);
       } catch (err) {
+        console.error('Erro ao carregar áudio personalizado:', err);
         document.getElementById('status').textContent = 'Erro ao carregar arquivo de áudio: ' + err.message;
       }
     }
@@ -177,6 +185,7 @@
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       silenceStartTime = null;
+      isAlarmActive = false;
     }
 
     function processAudio() {
@@ -199,28 +208,28 @@
       // Update bar graph
       updateGraph(displayDecibels);
 
-      // Check threshold
-      const threshold = parseFloat(document.getElementById('thresholdInput').value) || 30;
-      const silenceTime = (parseFloat(document.getElementById('silenceTimeInput').value) || 1) * 1000;
+      // Check threshold only if alarm is not active
+      if (!isAlarmActive) {
+        const threshold = parseFloat(document.getElementById('thresholdInput').value) || 30;
+        const silenceTime = (parseFloat(document.getElementById('silenceTimeInput').value) || 1) * 1000;
 
-      if (displayDecibels < threshold) {
-        // Track start of silence
-        if (!silenceStartTime) {
-          silenceStartTime = Date.now();
+        if (displayDecibels < threshold) {
+          // Track start of silence
+          if (!silenceStartTime) {
+            silenceStartTime = Date.now();
+          }
+          // Check if silence duration exceeds specified time
+          if (Date.now() - silenceStartTime >= silenceTime && !alarmTimeout) {
+            alarmTimeout = setTimeout(() => {
+              triggerAlarm();
+            }, 0); // Trigger immediately since silence time is met
+          }
+        } else {
+          // Reset silence tracking if noise is above threshold
+          silenceStartTime = null;
+          clearTimeout(alarmTimeout);
+          alarmTimeout = null;
         }
-        // Check if silence duration exceeds specified time
-        if (Date.now() - silenceStartTime >= silenceTime && !alarmTimeout) {
-          alarmTimeout = setTimeout(() => {
-            triggerAlarm();
-          }, 0); // Trigger immediately since silence time is met
-        }
-      } else {
-        // Reset silence tracking if noise is above threshold
-        silenceStartTime = null;
-        clearTimeout(alarmTimeout);
-        alarmTimeout = null;
-        stopAlarm();
-        document.getElementById('status').textContent = 'Monitorando...';
       }
 
       // Continue processing
@@ -253,8 +262,8 @@
     function triggerAlarm() {
       if (!isMonitoring) return;
       document.getElementById('status').textContent = 'Alarme: Ruído muito baixo!';
+      isAlarmActive = true;
       alarmCycleCount = 0;
-      // Load custom tone
       const toneInput = document.getElementById('toneInput');
       const toneAlarm = parseFloat(toneInput.value) || 440;
       playAlarmCycle(toneAlarm);
@@ -276,9 +285,10 @@
         setTimeout(() => {
           alarmSource.stop();
           alarmCycleCount++;
-          setTimeout(playAlarmCycle, 1000); // Wait 1 second before next cycle
+          setTimeout(() => playAlarmCycle(tone), 1000); // Wait 1 second before next cycle
         }, 5000);
       } else {
+        // Play default tone
         const oscillator = audioContext.createOscillator();
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(tone, audioContext.currentTime);
@@ -287,7 +297,7 @@
         setTimeout(() => {
           oscillator.stop();
           alarmCycleCount++;
-          setTimeout(playAlarmCycle, 1000); // Wait 1 second before next cycle
+          setTimeout(() => playAlarmCycle(tone), 1000); // Wait 1 second before next cycle
         }, 5000);
       }
     }
@@ -298,6 +308,7 @@
         alarmSource = null;
       }
       alarmCycleCount = maxAlarmCycles; // Prevent further cycles
+      isAlarmActive = false;
     }
 
     // Set default theme
