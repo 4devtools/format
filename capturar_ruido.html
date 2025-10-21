@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detecção de Ruído</title>
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #111;
+    color: #eee;
+  }
+  input {
+    padding: 5px;
+    font-size: 16px;
+    margin: 5px;
+    width: 100px;
+  }
+  #status {
+    margin-top: 20px;
+    font-size: 24px;
+  }
+  #dbLevel {
+    font-size: 40px;
+    margin-top: 10px;
+    color: #0f0;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<h2>Monitor de Ruído</h2>
+
+<label>Limiar (dB): </label>
+<input type="number" id="threshold" value="40" step="1"><br>
+<button onclick="iniciar()">Iniciar Escuta</button>
+
+<div id="dbLevel">-- dB</div>
+<div id="status">Aguardando...</div>
+
+<audio id="alarm" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+<script>
+let audioContext, analyser, mic, dataArray;
+let alarmPlayed = false;
+let silenceStart = null;
+
+async function iniciar() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    mic = audioContext.createMediaStreamSource(stream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 1024;
+    mic.connect(analyser);
+    dataArray = new Uint8Array(analyser.fftSize);
+
+    document.getElementById("status").textContent = "Ouvindo...";
+    loop();
+  } catch (err) {
+    alert("Erro ao acessar o microfone: " + err.message);
+  }
+}
+
+function calcularDecibeis() {
+  analyser.getByteTimeDomainData(dataArray);
+  let soma = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    let valor = (dataArray[i] - 128) / 128;
+    soma += valor * valor;
+  }
+  let rms = Math.sqrt(soma / dataArray.length);
+  let db = 20 * Math.log10(rms);
+  if (db < -90) db = -90; // limite inferior
+  db = Math.round(db + 90); // normaliza entre 0 e 90 dB aprox
+  return db;
+}
+
+function loop() {
+  const db = calcularDecibeis();
+  document.getElementById("dbLevel").textContent = db + " dB";
+
+  const threshold = parseFloat(document.getElementById("threshold").value) || 40;
+  const agora = Date.now();
+
+  if (db < threshold) {
+    if (!silenceStart) silenceStart = agora;
+    const silencioMs = agora - silenceStart;
+    document.getElementById("status").textContent = "Silêncio detectado (" + Math.round(silencioMs/1000) + "s)";
+    if (silencioMs > 2000 && !alarmPlayed) { // 2 segundos de silêncio
+      document.getElementById("status").textContent = "🔔 Alarme!";
+      document.getElementById("alarm").play();
+      alarmPlayed = true;
+    }
+  } else {
+    silenceStart = null;
+    alarmPlayed = false;
+    document.getElementById("status").textContent = "Ruído detectado";
+  }
+
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
