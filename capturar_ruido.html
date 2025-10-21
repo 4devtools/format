@@ -1,112 +1,303 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Detecção de Ruído</title>
-<style>
-  body {
-    font-family: sans-serif;
-    text-align: center;
-    padding: 20px;
-    background: #111;
-    color: #eee;
-  }
-  input {
-    padding: 5px;
-    font-size: 16px;
-    margin: 5px;
-    width: 100px;
-  }
-  #status {
-    margin-top: 20px;
-    font-size: 24px;
-  }
-  #dbLevel {
-    font-size: 40px;
-    margin-top: 10px;
-    color: #0f0;
-  }
-  button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
-  }
-</style>
-</head>
-<body>
-
-<h2>Monitor de Ruído</h2>
-
-<label>Limiar (dB): </label>
-<input type="number" id="threshold" value="40" step="1"><br>
-<button onclick="iniciar()">Iniciar Escuta</button>
-
-<div id="dbLevel">-- dB</div>
-<div id="status">Aguardando...</div>
-
-<audio id="alarm" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
-
-<script>
-let audioContext, analyser, mic, dataArray;
-let alarmPlayed = false;
-let silenceStart = null;
-
-async function iniciar() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    mic = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 1024;
-    mic.connect(analyser);
-    dataArray = new Uint8Array(analyser.fftSize);
-
-    document.getElementById("status").textContent = "Ouvindo...";
-    loop();
-  } catch (err) {
-    alert("Erro ao acessar o microfone: " + err.message);
-  }
-}
-
-function calcularDecibeis() {
-  analyser.getByteTimeDomainData(dataArray);
-  let soma = 0;
-  for (let i = 0; i < dataArray.length; i++) {
-    let valor = (dataArray[i] - 128) / 128;
-    soma += valor * valor;
-  }
-  let rms = Math.sqrt(soma / dataArray.length);
-  let db = 20 * Math.log10(rms);
-  if (db < -90) db = -90; // limite inferior
-  db = Math.round(db + 90); // normaliza entre 0 e 90 dB aprox
-  return db;
-}
-
-function loop() {
-  const db = calcularDecibeis();
-  document.getElementById("dbLevel").textContent = db + " dB";
-
-  const threshold = parseFloat(document.getElementById("threshold").value) || 40;
-  const agora = Date.now();
-
-  if (db < threshold) {
-    if (!silenceStart) silenceStart = agora;
-    const silencioMs = agora - silenceStart;
-    document.getElementById("status").textContent = "Silêncio detectado (" + Math.round(silencioMs/1000) + "s)";
-    if (silencioMs > 2000 && !alarmPlayed) { // 2 segundos de silêncio
-      document.getElementById("status").textContent = "🔔 Alarme!";
-      document.getElementById("alarm").play();
-      alarmPlayed = true;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor de Ruído</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
     }
-  } else {
-    silenceStart = null;
-    alarmPlayed = false;
-    document.getElementById("status").textContent = "Ruído detectado";
-  }
+    .container {
+      text-align: center;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    input, button, select {
+      margin: 10px;
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+    #decibelOutput {
+      font-size: 24px;
+    }
+    #status {
+      font-size: 18px;
+      color: #ff5555;
+    }
+    canvas {
+      margin: 10px;
+      border: 1px solid;
+      transition: border-color 0.3s;
+    }
+    /* Light Theme */
+    .light-theme {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    .light-theme .container {
+      background-color: white;
+      border: 1px solid #ccc;
+    }
+    .light-theme input,
+    .light-theme button,
+    .light-theme select {
+      background-color: #fff;
+      color: #333;
+      border-color: #ccc;
+    }
+    .light-theme canvas {
+      border-color: #ccc;
+    }
+    /* Dark Theme */
+    .dark-theme {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+    .dark-theme .container {
+      background-color: #2c2c2c;
+      border: 1px solid #444;
+    }
+    .dark-theme input,
+    .dark-theme button,
+    .dark-theme select {
+      background-color: #333;
+      color: #e0e0e0;
+      border-color: #555;
+    }
+    .dark-theme canvas {
+      border-color: #555;
+    }
+  </style>
+</head>
+<body class="dark-theme">
+  <div class="container">
+    <h1>Monitor de Ruído</h1>
+    <label for="themeSelect">Tema:</label>
+    <select id="themeSelect" onchange="changeTheme()">
+      <option value="dark">Dark Theme</option>
+      <option value="light">Light Theme</option>
+    </select>
+    <p>Nível de Ruído: <span id="decibelOutput">0</span> dB</p>
+    <label for="thresholdInput">Limiar de Ruído Mínimo (dB):</label>
+    <input type="number" id="thresholdInput" value="30" min="0" max="100">
+    <br>
+    <label for="silenceTimeInput">Tempo para Silêncio (segundos):</label>
+    <input type="number" id="silenceTimeInput" value="1" min="0.1" step="0.1">
+    <br>
+    <label for="alarmFileInput">Selecionar Arquivo de Alarme (opcional):</label>
+    <input type="file" id="alarmFileInput" accept="audio/*">
+    <br>
+    <button onclick="startMonitoring()">Iniciar Monitoramento</button>
+    <button onclick="stopMonitoring()">Parar Monitoramento</button>
+    <p id="status"></p>
+    <canvas id="volumeGraph" width="300" height="100"></canvas>
+  </div>
 
-  requestAnimationFrame(loop);
-}
-</script>
+  <script>
+    let audioContext;
+    let analyser;
+    let microphone;
+    let isMonitoring = false;
+    let alarmTimeout;
+    let alarmAudio = null;
+    let alarmSource = null;
+    let alarmCycleCount = 0;
+    const maxAlarmCycles = 30;
+    let silenceStartTime = null;
+    const canvas = document.getElementById('volumeGraph');
+    const ctx = canvas.getContext('2d');
+
+    function changeTheme() {
+      const theme = document.getElementById('themeSelect').value;
+      document.body.className = theme + '-theme';
+    }
+
+    async function startMonitoring() {
+      if (isMonitoring) return;
+      isMonitoring = true;
+      document.getElementById('status').textContent = 'Monitorando...';
+
+      try {
+        // Request microphone access
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        microphone = audioContext.createMediaStreamSource(stream);
+        microphone.connect(analyser);
+
+        // Load custom alarm file if selected
+        const alarmFileInput = document.getElementById('alarmFileInput');
+        if (alarmFileInput.files.length > 0) {
+          await loadCustomAlarm(alarmFileInput.files[0]);
+        }
+
+        // Start processing audio
+        processAudio();
+      } catch (err) {
+        document.getElementById('status').textContent = 'Erro ao acessar o microfone ou carregar áudio: ' + err.message;
+        isMonitoring = false;
+      }
+    }
+
+    async function loadCustomAlarm(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        alarmAudio = await audioContext.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        document.getElementById('status').textContent = 'Erro ao carregar arquivo de áudio: ' + err.message;
+      }
+    }
+
+    function stopMonitoring() {
+      if (!isMonitoring) return;
+      isMonitoring = false;
+      document.getElementById('status').textContent = 'Parado';
+      if (audioContext) {
+        audioContext.close();
+        clearTimeout(alarmTimeout);
+        stopAlarm();
+      }
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      silenceStartTime = null;
+    }
+
+    function processAudio() {
+      if (!isMonitoring) return;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+
+      // Calculate average amplitude
+      const sum = dataArray.reduce((a, b) => a + b, 0);
+      const avg = sum / dataArray.length;
+
+      // Convert to approximate decibels (simplified, not calibrated)
+      const decibels = Math.round(20 * Math.log10(avg * 10));
+      const displayDecibels = isFinite(decibels) ? decibels : 0;
+
+      // Update decibel display
+      document.getElementById('decibelOutput').textContent = displayDecibels;
+
+      // Update bar graph
+      updateGraph(displayDecibels);
+
+      // Check threshold
+      const threshold = parseFloat(document.getElementById('thresholdInput').value) || 30;
+      const silenceTime = (parseFloat(document.getElementById('silenceTimeInput').value) || 1) * 1000;
+
+      if (displayDecibels < threshold) {
+        // Track start of silence
+        if (!silenceStartTime) {
+          silenceStartTime = Date.now();
+        }
+        // Check if silence duration exceeds specified time
+        if (Date.now() - silenceStartTime >= silenceTime && !alarmTimeout) {
+          alarmTimeout = setTimeout(() => {
+            triggerAlarm();
+          }, 0); // Trigger immediately since silence time is met
+        }
+      } else {
+        // Reset silence tracking if noise is above threshold
+        silenceStartTime = null;
+        clearTimeout(alarmTimeout);
+        alarmTimeout = null;
+        stopAlarm();
+        document.getElementById('status').textContent = 'Monitorando...';
+      }
+
+      // Continue processing
+      requestAnimationFrame(processAudio);
+    }
+
+    function updateGraph(decibels) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw background
+      ctx.fillStyle = document.body.className.includes('dark') ? '#444' : '#e0e0e0';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw bar (scale decibels to canvas width, max 100 dB)
+      const maxDb = 100;
+      const barWidth = (decibels / maxDb) * canvas.width;
+      ctx.fillStyle = decibels < (parseFloat(document.getElementById('thresholdInput').value) || 30) ? '#ff5555' : '#55ff55';
+      ctx.fillRect(0, 0, Math.min(barWidth, canvas.width), canvas.height);
+
+      // Draw threshold line
+      const threshold = parseFloat(document.getElementById('thresholdInput').value) || 30;
+      const thresholdX = (threshold / maxDb) * canvas.width;
+      ctx.beginPath();
+      ctx.moveTo(thresholdX, 0);
+      ctx.lineTo(thresholdX, canvas.height);
+      ctx.strokeStyle = document.body.className.includes('dark') ? '#e0e0e0' : '#000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function triggerAlarm() {
+      if (!isMonitoring) return;
+      document.getElementById('status').textContent = 'Alarme: Ruído muito baixo!';
+      alarmCycleCount = 0;
+      playAlarmCycle();
+    }
+
+    function playAlarmCycle() {
+      if (!isMonitoring || alarmCycleCount >= maxAlarmCycles) {
+        stopAlarm();
+        document.getElementById('status').textContent = isMonitoring ? 'Monitorando...' : 'Parado';
+        return;
+      }
+
+      if (alarmAudio) {
+        // Play custom audio
+        alarmSource = audioContext.createBufferSource();
+        alarmSource.buffer = alarmAudio;
+        alarmSource.connect(audioContext.destination);
+        alarmSource.start();
+        setTimeout(() => {
+          alarmSource.stop();
+          alarmCycleCount++;
+          setTimeout(playAlarmCycle, 1000); // Wait 1 second before next cycle
+        }, 5000);
+      } else {
+        // Play default 440Hz tone
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        oscillator.connect(audioContext.destination);
+        oscillator.start();
+        setTimeout(() => {
+          oscillator.stop();
+          alarmCycleCount++;
+          setTimeout(playAlarmCycle, 1000); // Wait 1 second before next cycle
+        }, 5000);
+      }
+    }
+
+    function stopAlarm() {
+      if (alarmSource) {
+        alarmSource.stop();
+        alarmSource = null;
+      }
+      alarmCycleCount = maxAlarmCycles; // Prevent further cycles
+    }
+
+    // Set default theme
+    document.getElementById('themeSelect').value = 'dark';
+    changeTheme();
+  </script>
 </body>
 </html>
