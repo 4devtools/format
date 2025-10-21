@@ -279,7 +279,6 @@
           setTimeout(playAlarmCycle, 1000); // Wait 1 second before next cycle
         }, 5000);
       } else {
-        // Play default 440Hz tone
         const oscillator = audioContext.createOscillator();
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(tone, audioContext.currentTime);
