@@ -51,8 +51,16 @@
         <input type="email" id="unidadeEmail">
     </div>
     <div class="form-group">
-        <label>URL da Planilha Google</label>
-        <input type="url" id="unidadeUrl">
+        <label>Spreadsheet ID (do Google Sheets)</label>
+        <input type="text" id="unidadeSpreadsheetId" placeholder="Ex: 1a2b3c4d5e6f7g8h9i0j">
+    </div>
+    <div class="form-group">
+        <label>API Key (Google Cloud)</label>
+        <input type="text" id="unidadeApiKey">
+    </div>
+    <div class="form-group">
+        <label>Nome da Aba (Sheet Name)</label>
+        <input type="text" id="unidadeSheetName" value="Sheet1">
     </div>
     <button class="btn btn-primary" id="salvarUnidade">Salvar Unidade</button>
 </div>
@@ -183,7 +191,9 @@ document.getElementById('salvarUnidade').addEventListener('click', () => {
     const u = data.inventário[0].unidade;
     u.nome = document.getElementById('unidadeNome').value.trim();
     u.email = document.getElementById('unidadeEmail').value.trim();
-    u.urlPlanilha = document.getElementById('unidadeUrl').value.trim();
+    u.spreadsheetId = document.getElementById('unidadeSpreadsheetId').value.trim();
+    u.apiKey = document.getElementById('unidadeApiKey').value.trim();
+    u.sheetName = document.getElementById('unidadeSheetName').value.trim();
     saveData();
     alert('Unidade salva!');
 });
@@ -433,31 +443,59 @@ document.getElementById('clearSalaBtn').addEventListener('click', () => {
 });
 
 /* ==============================================================
-   ENVIAR PARA GOOGLE SHEETS (exemplo com token)
+   ENVIAR PARA GOOGLE SHEETS (usando API Key)
    ============================================================== */
 document.getElementById('sendToSheetBtn').addEventListener('click', () => {
-    const url = data.inventário[0].unidade.urlPlanilha;
-    if (!url) return alert('Configure a URL da planilha na aba Unidade');
+    const unidade = data.inventário[0].unidade;
+    const spreadsheetId = unidade.spreadsheetId;
+    const apiKey = unidade.apiKey;
+    const sheetName = unidade.sheetName || 'Sheet1'; // aba padrão
 
-    // Exemplo de payload (ajuste conforme sua API)
-    const payload = data.inventário[0].inventario.map(s => ({
-        sala: s.salaId,
-        itens: s.objetos.map(o => ({
-            codigo: o.codigoBarra,
-            tipo: o.objetoId,
-            contador: o.contador,
-            dataHora: o.dataHora
-        }))
-    }));
+    if (!spreadsheetId || !apiKey) {
+        return alert('Configure Spreadsheet ID, API Key e Nome da Aba na aba Unidade');
+    }
 
-    // **IMPORTANTE**: substitua <SEU_TOKEN> pelo token real
+    // Preparar linhas para append (cada item vira uma linha: [sala, codigo, tipo, contador, dataHora])
+    const rows = [];
+    data.inventário[0].inventario.forEach(sala => {
+        sala.objetos.forEach(item => {
+            rows.push([
+                sala.salaId,
+                item.codigoBarra,
+                item.objetoId,
+                item.contador,
+                item.dataHora
+            ]);
+        });
+    });
+
+    if (rows.length === 0) {
+        return alert('Nenhum item para enviar');
+    }
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}:append?valueInputOption=RAW&key=${apiKey}`;
+
+    const payload = {
+        values: rows
+    };
+
     fetch(url, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer <SEU_TOKEN>'},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     })
-    .then(r => r.ok ? alert('Enviado com sucesso!') : alert('Erro ao enviar'))
-    .catch(() => alert('Erro de conexão'));
+    .then(response => {
+        if (response.ok) {
+            alert('Dados enviados com sucesso para o Google Sheets!');
+        } else {
+            response.json().then(err => console.error(err));
+            alert('Erro ao enviar: Verifique a API Key, Spreadsheet ID e permissões');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Erro de conexão');
+    });
 });
 
 /* ==============================================================
