@@ -5,32 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ativo Fixo</title>
 
-    <!-- ZXing (leitor de código de barras) -->
+    <!-- ZXing -->
     <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
-
-    <!-- Google API Client Library para OAuth 2.0 -->
-    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
-        body {font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f5f5;}
-        header {background:#3f51b5; color:#fff; padding:15px; text-align:center;}
-        nav {background:#5c6bc0; padding:10px;}
-        nav button {margin:5px; padding:8px 12px; background:#7986cb; color:#fff; border:none; cursor:pointer;}
-        nav button.active {background:#3f51b5;}
-        .tab {display:none; padding:20px; background:#fff; margin:20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,.1);}
+        body {font-family: Arial, sans-serif; margin:0; padding:0; background:#f0f2f5;}
+        header {background:#1a73e8; color:#fff; padding:15px; text-align:center;}
+        nav {background:#4285f4; padding:8px;}
+        nav button {margin:4px; padding:8px 16px; background:#5e9ff3; color:#fff; border:none; cursor:pointer; border-radius:4px;}
+        nav button.active {background:#1a73e8; font-weight:bold;}
+        .tab {display:none; padding:20px; background:#fff; margin:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.1);}
         .tab.active {display:block;}
         .form-group {margin-bottom:12px;}
-        .form-group label {display:block; margin-bottom:4px;}
-        .form-group input, .form-group select {width:100%; padding:6px; box-sizing:border-box;}
-        .btn {padding:6px 12px; margin-right:5px; cursor:pointer;}
-        .btn-primary {background:#3f51b5; color:#fff;}
+        .form-group label {display:block; margin-bottom:4px; font-weight:bold;}
+        .form-group input, .form-group select {width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;}
+        .btn {padding:8px 16px; margin:5px 5px 5px 0; cursor:pointer; border:none; border-radius:4px;}
+        .btn-primary {background:#1a73e8; color:#fff;}
         .btn-danger {background:#d32f2f; color:#fff;}
-        .btn-google {background:#db4437; color:#fff;}
-        #video {width:100%; max-width:400px; margin-top:10px; display:none;}
-        #inventoryList {margin-top:15px;}
-        .item {padding:8px; background:#eee; margin-bottom:5px; cursor:pointer; border-radius:4px;}
-        .item.selected {background:#c5cae9;}
-        #authStatus {margin:10px 0; padding:10px; background:#e3f2fd; border-radius:4px;}
+        .btn-success {background:#4caf50; color:#fff;}
+        .btn-secondary {background:#9e9e9e; color:#fff;}
+        table {width:100%; border-collapse:collapse; margin-top:10px;}
+        th, td {border:1px solid #ddd; padding:10px; text-align:left;}
+        th {background:#e3f2fd; font-weight:bold;}
+        tr:hover {background:#f5f5f5; cursor:pointer;}
+        tr.selected {background:#bbdefb !important;}
+        #video {width:100%; max-width:400px; margin:15px 0; display:none; border:2px solid #1a73e8; border-radius:8px;}
+        #inventoryList .item {padding:10px; background:#f9f9f9; margin:5px 0; border-radius:4px; cursor:pointer;}
+        #inventoryList .item.selected {background:#bbdefb; border-left:4px solid #1a73e8;}
+        .hidden {display:none;}
     </style>
 </head>
 <body>
@@ -38,69 +42,58 @@
 <header><h1>Controle de Ativo Fixo</h1></header>
 
 <nav>
-    <button class="tab-btn" data-tab="tabUnidade">Unidade</button>
+    <button class="tab-btn active" data-tab="tabUnidade">Unidades</button>
     <button class="tab-btn" data-tab="tabLocais">Salas</button>
     <button class="tab-btn" data-tab="tabObjetos">Objetos</button>
     <button class="tab-btn" data-tab="tabInventario">Registrar Inventário</button>
 </nav>
 
-<!-- ====================== UNIDADE (com OAuth) ====================== -->
-<div id="tabUnidade" class="tab">
-    <h2>Unidade / Filial</h2>
-    <div class="form-group">
-        <label>Nome</label>
-        <input type="text" id="unidadeNome">
-    </div>
-    <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="unidadeEmail">
-    </div>
-    <div class="form-group">
-        <label>ID da Planilha Google Sheets</label>
-        <input type="text" id="sheetId" placeholder="Ex: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
-    </div>
-    <div class="form-group">
-        <label>Nome da Aba (Sheet Name)</label>
-        <input type="text" id="unidadeSheetName" value="Sheet1">
-    </div>
-    <div id="authStatus"></div>
-       <button class="btn btn-google" id="authGoogleBtn">Autenticar com Google</button>
-       <button class="btn btn-primary" id="salvarUnidade">Salvar Unidade</button>
-    </div>
+<!-- ====================== UNIDADES ====================== -->
+<div id="tabUnidade" class="tab active">
+    <h2>Cadastro de Unidades</h2>
+    <div class="form-group"><label>Nome da Unidade</label><input type="text" id="unidadeNome"></div>
+    <div class="form-group"><label>E-mail</label><input type="email" id="unidadeEmail"></div>
+    <div class="form-group"><label>ID da Planilha (opcional)</label><input type="text" id="unidadeSheetId"></div>
+    <button class="btn btn-primary" id="addUnidade">Adicionar Unidade</button>
+    <button class="btn btn-danger hidden" id="removeUnidade">Remover Selecionada</button>
+
+    <table id="tabelaUnidades">
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Planilha</th></tr></thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <!-- ====================== SALAS ====================== -->
 <div id="tabLocais" class="tab">
-    <h2>Cadastro de Salas</h2>
+    <h2>Cadastro de Salas (vinculadas à Unidade)</h2>
     <div class="form-group">
-        <label>ID da Sala</label>
-        <input type="text" id="salaId">
+        <label>Unidade</label>
+        <select id="unidadeSelectLocais"><option value="">Selecione...</option></select>
     </div>
-    <div class="form-group">
-        <label>Descrição</label>
-        <input type="text" id="salaDesc">
-    </div>
+    <div class="form-group"><label>ID da Sala</label><input type="text" id="salaId"></div>
+    <div class="form-group"><label>Descrição</label><input type="text" id="salaDesc"></div>
     <button class="btn btn-primary" id="addSala">Adicionar Sala</button>
-    <ul id="listaSalas"></ul>
+    <button class="btn btn-danger hidden" id="removeSala">Remover Selecionada</button>
+
+    <table id="tabelaSalas">
+        <thead><tr><th>Unidade</th><th>ID</th><th>Descrição</th></tr></thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <!-- ====================== OBJETOS ====================== -->
 <div id="tabObjetos" class="tab">
     <h2>Cadastro de Tipos de Objetos</h2>
-    <div class="form-group">
-        <label>ID do Objeto</label>
-        <input type="text" id="objId">
-    </div>
-    <div class="form-group">
-        <label>Descrição</label>
-        <input type="text" id="objDesc">
-    </div>
-    <div class="form-group">
-        <label>Complemento (opcional)</label>
-        <input type="text" id="objComp">
-    </div>
+    <div class="form-group"><label>ID do Objeto</label><input type="text" id="objId"></div>
+    <div class="form-group"><label>Descrição</label><input type="text" id="objDesc"></div>
+    <div class="form-group"><label>Complemento</label><input type="text" id="objComp"></div>
     <button class="btn btn-primary" id="addObjeto">Adicionar Objeto</button>
-    <ul id="listaObjetos"></ul>
+    <button class="btn btn-danger hidden" id="removeObjeto">Remover Selecionado</button>
+
+    <table id="tabelaObjetos">
+        <thead><tr><th>ID</th><th>Descrição</th><th>Complemento</th></tr></thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <!-- ====================== INVENTÁRIO ====================== -->
@@ -108,7 +101,12 @@
     <h2>Registrar Inventário</h2>
 
     <div class="form-group">
-        <label>Local (Sala)</label>
+        <label>Unidade</label>
+        <select id="selectUnidadeInv"><option value="">Selecione...</option></select>
+    </div>
+
+    <div class="form-group">
+        <label>Sala</label>
         <select id="selectSala"><option value="">Selecione...</option></select>
     </div>
 
@@ -124,7 +122,7 @@
     </div>
 
     <div class="form-group">
-        <label>Modo de captura</label>
+        <label>Modo</label>
         <label><input type="radio" name="scanMode" value="single" checked> Única</label>
         <label><input type="radio" name="scanMode" value="loop"> Loop</label>
     </div>
@@ -133,107 +131,44 @@
 
     <hr>
     <button class="btn btn-primary" id="addItemBtn">Adicionar</button>
-    <button class="btn btn-danger" id="removeItemBtn" disabled>Remover Selecionado</button>
-    <button class="btn" id="clearSalaBtn">Limpar Sala</button>
+    <button class="btn btn-danger" id="removeItemBtn" disabled>Remover</button>
+    <button class="btn btn-secondary" id="clearSalaBtn">Limpar Sala</button>
 
-    <h3>Itens registrados nesta sala</h3>
+    <h3>Itens registrados</h3>
     <div id="inventoryList"></div>
 
     <hr>
-    <button class="btn btn-primary" id="sendToSheetBtn">Enviar para Google Sheets</button>
+    <button class="btn btn-success" id="downloadXlsxBtn">Gerar Relatório XLSX (com estilo)</button>
 </div>
 
 <script>
 /* ==============================================================
-   VARIÁVEIS GLOBAIS
+   DADOS GLOBAIS
    ============================================================== */
-const CLIENT_ID = '471985740081-pnrccgihqnbqias220q1qf17va8dv8va.apps.googleusercontent.com';  // Seu Client ID da imagem
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';  // Escopo para Sheets (leitura/escrita)
 const codeReader = new ZXing.BrowserMultiFormatReader();
 let scanning = false;
 let selectedItemIndex = -1;
-let gapiLoaded = false;
+let selectedUnidadeIndex = -1;
+let selectedSalaIndex = -1;
+let selectedObjetoIndex = -1;
+
 let data = {
-    inventário: [{
-        unidade: {nome:"", email:"", sheetId:"", accessToken: ""},  // Armazena token aqui
-        locais: [],
-        objetos: [],
-        inventario: []
-    }]
+    unidades: [],      // [{id, nome, email, sheetId}]
+    salas: [],         // [{id, unidadeId, descricao}]
+    objetos: [],       // [{id, descricao, complemento}]
+    inventario: []     // [{unidadeId, salaId, objetoId, codigoBarra, contador, dataHora}]
 };
 
 /* ==============================================================
    PERSISTÊNCIA
    ============================================================== */
 function loadData() {
-    const stored = localStorage.getItem('ativoFixoData');
+    const stored = localStorage.getItem('ativoFixoDataV2');
     if (stored) data = JSON.parse(stored);
     else saveData();
 }
 function saveData() {
-    localStorage.setItem('ativoFixoData', JSON.stringify(data));
-}
-
-/* ==============================================================
-   INICIALIZAÇÃO GAPI (OAuth)
-   ============================================================== */
-function initGapi() {
-    gapi.load('client:auth2', () => {
-        gapi.client.init({
-            clientId: CLIENT_ID,
-            scope: SCOPES,
-            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
-        }).then(() => {
-            gapiLoaded = true;
-            updateAuthStatus();
-            console.log('GAPI inicializado');
-        }).catch(err => console.error('Erro ao inicializar GAPI:', err));
-    });
-}
-
-/* ==============================================================
-   AUTENTICAÇÃO GOOGLE
-   ============================================================== */
-document.getElementById('authGoogleBtn').addEventListener('click', handleAuthClick);
-
-function handleAuthClick() {
-    if (!gapiLoaded) {
-        alert('Carregando... Aguarde e tente novamente.');
-        return;
-    }
-
-    const authInstance = gapi.auth2.getAuthInstance();
-    if (authInstance.isSignedIn.get()) {
-        authInstance.signOut();
-        updateAuthStatus();
-        return;
-    }
-
-    authInstance.signIn({
-        prompt: 'consent'  // Força tela de consentimento na primeira vez
-    }).then(() => {
-        const token = authInstance.currentUser.get().getAuthResponse().access_token;
-        data.inventário[0].unidade.accessToken = token;
-        saveData();
-        updateAuthStatus();
-        alert('✅ Autenticado! Token salvo.');
-    }).catch(err => {
-        console.error('Erro na autenticação:', err);
-        alert('❌ Erro na autenticação. Verifique console.');
-    });
-}
-
-function updateAuthStatus() {
-    const status = document.getElementById('authStatus');
-    const authInstance = gapi.auth2.getAuthInstance();
-    const token = data.inventário[0].unidade.accessToken;
-    if (authInstance?.isSignedIn.get() || token) {
-        status.innerHTML = '<strong>✅ Autenticado</strong> (Token válido)';
-        status.style.background = '#e8f5e8';
-    } else {
-        status.innerHTML = '<strong>❌ Não autenticado</strong> - Clique em "Autenticar"';
-        status.style.background = '#fff3cd';
-    }
+    localStorage.setItem('ativoFixoDataV2', JSON.stringify(data));
 }
 
 /* ==============================================================
@@ -246,121 +181,229 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.getElementById(btn.dataset.tab).classList.add('active');
         btn.classList.add('active');
 
-        if (btn.dataset.tab === 'tabLocais') renderSalas();
+        if (btn.dataset.tab === 'tabUnidade') renderUnidades();
+        if (btn.dataset.tab === 'tabLocais') { renderUnidadeSelectLocais(); renderSalas(); }
         if (btn.dataset.tab === 'tabObjetos') renderObjetos();
         if (btn.dataset.tab === 'tabInventario') initInventarioTab();
-        if (btn.dataset.tab === 'tabUnidade') updateAuthStatus();
     });
 });
 
 /* ==============================================================
-   UNIDADE (salvar + sheetId)
+   UNIDADES
    ============================================================== */
-document.getElementById('salvarUnidade').addEventListener('click', () => {
-    const u = data.inventário[0].unidade;
-    u.nome = document.getElementById('unidadeNome').value.trim();
-    u.email = document.getElementById('unidadeEmail').value.trim();
-    u.sheetId = document.getElementById('sheetId').value.trim();  // Novo campo
-    saveData();
-    alert('Unidade salva!');
+function renderUnidades() {
+    const tbody = document.querySelector('#tabelaUnidades tbody');
+    tbody.innerHTML = '';
+    data.unidades.forEach((u, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u.nome}</td><td>${u.email}</td><td>${u.sheetId || '-'}</td>`;
+        tr.onclick = () => {
+            document.querySelectorAll('#tabelaUnidades tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+            selectedUnidadeIndex = i;
+            document.getElementById('removeUnidade').classList.remove('hidden');
+            preencheUnidade(u);
+        };
+        tbody.appendChild(tr);
+    });
+}
+
+function preencheUnidade(u) {
+    document.getElementById('unidadeNome').value = u.nome;
+    document.getElementById('unidadeEmail').value = u.email;
+    document.getElementById('unidadeSheetId').value = u.sheetId || '';
+}
+
+document.getElementById('addUnidade').addEventListener('click', () => {
+    const nome = document.getElementById('unidadeNome').value.trim();
+    const email = document.getElementById('unidadeEmail').value.trim();
+    if (!nome) return alert('Nome é obrigatório');
+
+    if (selectedUnidadeIndex >= 0) {
+        data.unidades[selectedUnidadeIndex].nome = nome;
+        data.unidades[selectedUnidadeIndex].email = email;
+        data.unidades[selectedUnidadeIndex].sheetId = document.getElementById('unidadeSheetId').value.trim();
+        selectedUnidadeIndex = -1;
+        document.getElementById('removeUnidade').classList.add('hidden');
+    } else {
+        const id = 'u' + Date.now();
+        data.unidades.push({id, nome, email, sheetId: document.getElementById('unidadeSheetId').value.trim()});
+    }
+    limpaUnidade(); saveData(); renderUnidades();
 });
+
+document.getElementById('removeUnidade').addEventListener('click', () => {
+    if (selectedUnidadeIndex >= 0 && confirm('Remover unidade?')) {
+        data.unidades.splice(selectedUnidadeIndex, 1);
+        selectedUnidadeIndex = -1;
+        document.getElementById('removeUnidade').classList.add('hidden');
+        limpaUnidade(); saveData(); renderUnidades();
+    }
+});
+
+function limpaUnidade() {
+    document.getElementById('unidadeNome').value = '';
+    document.getElementById('unidadeEmail').value = '';
+    document.getElementById('unidadeSheetId').value = '';
+}
 
 /* ==============================================================
    SALAS
    ============================================================== */
-function renderSalas() {
-    const ul = document.getElementById('listaSalas');
-    ul.innerHTML = '';
-    data.inventário[0].locais.forEach((s, i) => {
-        const li = document.createElement('li');
-        li.textContent = `${s.id} – ${s.descricao}`;
-        const del = document.createElement('button');
-        del.textContent = 'X';
-        del.className = 'btn btn-danger';
-        del.style.float = 'right';
-        del.onclick = () => {
-            if (confirm('Remover sala?')) {
-                data.inventário[0].locais.splice(i,1);
-                saveData(); renderSalas();
-            }
-        };
-        li.appendChild(del);
-        ul.appendChild(li);
+function renderUnidadeSelectLocais() {
+    const select = document.getElementById('unidadeSelectLocais');
+    select.innerHTML = '<option value="">Selecione...</option>';
+    data.unidades.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id; opt.textContent = u.nome;
+        select.appendChild(opt);
     });
 }
+
+function renderSalas() {
+    const tbody = document.querySelector('#tabelaSalas tbody');
+    tbody.innerHTML = '';
+    const unidadeId = document.getElementById('unidadeSelectLocais').value;
+    const salas = unidadeId ? data.salas.filter(s => s.unidadeId === unidadeId) : data.salas;
+
+    salas.forEach((s, i) => {
+        const u = data.unidades.find(un => un.id === s.unidadeId);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u?.nome || '—'}</td><td>${s.id}</td><td>${s.descricao}</td>`;
+        tr.onclick = () => {
+            document.querySelectorAll('#tabelaSalas tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+            selectedSalaIndex = data.salas.indexOf(s);
+            document.getElementById('removeSala').classList.remove('hidden');
+            document.getElementById('salaId').value = s.id;
+            document.getElementById('salaDesc').value = s.descricao;
+            document.getElementById('unidadeSelectLocais').value = s.unidadeId;
+        };
+        tbody.appendChild(tr);
+    });
+}
+
 document.getElementById('addSala').addEventListener('click', () => {
+    const unidadeId = document.getElementById('unidadeSelectLocais').value;
     const id = document.getElementById('salaId').value.trim();
     const desc = document.getElementById('salaDesc').value.trim();
-    if (!id || !desc) return alert('Preencha ID e descrição');
-    if (data.inventário[0].locais.some(l => l.id===id)) return alert('ID já existe');
-    data.inventário[0].locais.push({id, descricao:desc, quantidade:0});
-    saveData(); renderSalas();
+    if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
+
+    if (selectedSalaIndex >= 0) {
+        data.salas[selectedSalaIndex].id = id;
+        data.salas[selectedSalaIndex].descricao = desc;
+        selectedSalaIndex = -1;
+        document.getElementById('removeSala').classList.add('hidden');
+    } else {
+        data.salas.push({id, unidadeId, descricao: desc});
+    }
+    limpaSala(); saveData(); renderSalas();
+});
+
+document.getElementById('removeSala').addEventListener('click', () => {
+    if (selectedSalaIndex >= 0 && confirm('Remover sala?')) {
+        data.salas.splice(selectedSalaIndex, 1);
+        selectedSalaIndex = -1;
+        document.getElementById('removeSala').classList.add('hidden');
+        limpaSala(); saveData(); renderSalas();
+    }
+});
+
+function limpaSala() {
     document.getElementById('salaId').value = '';
     document.getElementById('salaDesc').value = '';
-});
+}
 
 /* ==============================================================
    OBJETOS
    ============================================================== */
 function renderObjetos() {
-    const ul = document.getElementById('listaObjetos');
-    ul.innerHTML = '';
-    data.inventário[0].objetos.forEach((o, i) => {
-        const li = document.createElement('li');
-        li.textContent = `${o.id} – ${o.descricao}`;
-        const del = document.createElement('button');
-        del.textContent = 'X';
-        del.className = 'btn btn-danger';
-        del.style.float = 'right';
-        del.onclick = () => {
-            if (confirm('Remover objeto?')) {
-                data.inventário[0].objetos.splice(i,1);
-                saveData(); renderObjetos();
-            }
+    const tbody = document.querySelector('#tabelaObjetos tbody');
+    tbody.innerHTML = '';
+    data.objetos.forEach((o, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${o.id}</td><td>${o.descricao}</td><td>${o.complemento || ''}</td>`;
+        tr.onclick = () => {
+            document.querySelectorAll('#tabelaObjetos tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+            selectedObjetoIndex = i;
+            document.getElementById('removeObjeto').classList.remove('hidden');
+            document.getElementById('objId').value = o.id;
+            document.getElementById('objDesc').value = o.descricao;
+            document.getElementById('objComp').value = o.complemento || '';
         };
-        li.appendChild(del);
-        ul.appendChild(li);
+        tbody.appendChild(tr);
     });
 }
+
 document.getElementById('addObjeto').addEventListener('click', () => {
     const id = document.getElementById('objId').value.trim();
     const desc = document.getElementById('objDesc').value.trim();
     const comp = document.getElementById('objComp').value.trim();
     if (!id || !desc) return alert('Preencha ID e descrição');
-    if (data.inventário[0].objetos.some(o => o.id===id)) return alert('ID já existe');
-    data.inventário[0].objetos.push({id, descricao:desc, complemento:comp});
-    saveData(); renderObjetos();
+
+    if (selectedObjetoIndex >= 0) {
+        data.objetos[selectedObjetoIndex].id = id;
+        data.objetos[selectedObjetoIndex].descricao = desc;
+        data.objetos[selectedObjetoIndex].complemento = comp;
+        selectedObjetoIndex = -1;
+        document.getElementById('removeObjeto').classList.add('hidden');
+    } else {
+        data.objetos.push({id, descricao: desc, complemento: comp});
+    }
+    limpaObjeto(); saveData(); renderObjetos();
+});
+
+document.getElementById('removeObjeto').addEventListener('click', () => {
+    if (selectedObjetoIndex >= 0 && confirm('Remover objeto?')) {
+        data.objetos.splice(selectedObjetoIndex, 1);
+        selectedObjetoIndex = -1;
+        document.getElementById('removeObjeto').classList.add('hidden');
+        limpaObjeto(); saveData(); renderObjetos();
+    }
+});
+
+function limpaObjeto() {
     document.getElementById('objId').value = '';
     document.getElementById('objDesc').value = '';
     document.getElementById('objComp').value = '';
-});
+}
 
 /* ==============================================================
-   INVENTÁRIO – INICIALIZAÇÃO
+   INVENTÁRIO
    ============================================================== */
 function initInventarioTab() {
-    // preenche selects
+    const selUnidade = document.getElementById('selectUnidadeInv');
     const selSala = document.getElementById('selectSala');
     const selObj = document.getElementById('selectObjeto');
-    selSala.innerHTML = '<option value="">Selecione...</option>';
-    selObj.innerHTML = '<option value="">Selecione...</option>';
 
-    data.inventário[0].locais.forEach(l => {
+    selUnidade.innerHTML = '<option value="">Selecione...</option>';
+    data.unidades.forEach(u => {
         const opt = document.createElement('option');
-        opt.value = l.id; opt.textContent = l.descricao;
-        selSala.appendChild(opt);
+        opt.value = u.id; opt.textContent = u.nome;
+        selUnidade.appendChild(opt);
     });
-    data.inventário[0].objetos.forEach(o => {
+
+    selUnidade.addEventListener('change', () => {
+        const unidadeId = selUnidade.value;
+        selSala.innerHTML = '<option value="">Selecione...</option>';
+        if (unidadeId) {
+            data.salas.filter(s => s.unidadeId === unidadeId).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id; opt.textContent = s.descricao;
+                selSala.appendChild(opt);
+            });
+        }
+        renderInventoryList();
+    });
+
+    selSala.addEventListener('change', renderInventoryList);
+
+    selObj.innerHTML = '<option value="">Selecione...</option>';
+    data.objetos.forEach(o => {
         const opt = document.createElement('option');
         opt.value = o.id; opt.textContent = o.descricao;
         selObj.appendChild(opt);
-    });
-
-    // ao mudar sala, recarrega lista
-    selSala.addEventListener('change', () => {
-        selectedItemIndex = -1;
-        document.getElementById('removeItemBtn').disabled = true;
-        renderInventoryList();
     });
 }
 
@@ -369,221 +412,207 @@ function initInventarioTab() {
    ============================================================== */
 document.getElementById('scanBtn').addEventListener('click', () => {
     const mode = document.querySelector('input[name="scanMode"]:checked').value;
-    if (scanning) { codeReader.reset(); scanning = false; document.getElementById('video').style.display='none'; return; }
-
+    if (scanning) { codeReader.reset(); scanning = false; document.getElementById('video').style.display = 'none'; return; }
     scanning = true;
     const video = document.getElementById('video');
     video.style.display = 'block';
-
-    codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
+    codeReader.decodeFromVideoDevice(undefined, video, (result) => {
         if (result) {
             document.getElementById('barcodeInput').value = result.getText();
-            if (mode === 'single') { stopScanner(); }
+            if (mode === 'single') stopScanner();
         }
     });
 });
-function stopScanner() {
-    codeReader.reset();
-    scanning = false;
-    document.getElementById('video').style.display='none';
-}
+function stopScanner() { codeReader.reset(); scanning = false; document.getElementById('video').style.display = 'none'; }
 
 /* ==============================================================
    ADICIONAR ITEM
    ============================================================== */
 document.getElementById('addItemBtn').addEventListener('click', addInventoryItem);
-document.getElementById('barcodeInput').addEventListener('keypress', e => { if(e.key==='Enter') addInventoryItem(); });
+document.getElementById('barcodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') addInventoryItem(); });
 
 function addInventoryItem() {
+    const unidadeId = document.getElementById('selectUnidadeInv').value;
     const salaId = document.getElementById('selectSala').value;
-    const objId  = document.getElementById('selectObjeto').value;
+    const objId = document.getElementById('selectObjeto').value;
     const codigo = document.getElementById('barcodeInput').value.trim();
 
-    if (!salaId || !objId || !codigo) return alert('Preencha sala, objeto e código');
+    if (!unidadeId || !salaId || !objId || !codigo) return alert('Preencha todos os campos');
 
-    // procura sala no inventario
-    let salaInv = data.inventário[0].inventario.find(s => s.salaId === salaId);
-    if (!salaInv) {
-        salaInv = {salaId, objetos:[]};
-        data.inventário[0].inventario.push(salaInv);
-    }
+    const key = `${unidadeId}-${salaId}-${objId}-${codigo}`;
+    const existente = data.inventario.find(i => i.unidadeId === unidadeId && i.salaId === salaId && i.objetoId === objId && i.codigoBarra === codigo);
 
-    // verifica se código já existe com outro objeto
-    const outroObj = data.inventário[0].inventario
-        .flatMap(s => s.objetos)
-        .find(o => o.codigoBarra === codigo && o.objetoId !== objId);
-
-    if (outroObj && !confirm(`Código ${codigo} já usado por outro tipo de objeto. Continuar?`)) return;
-
-    // procura mesmo código + mesmo objeto na mesma sala
-    const existente = salaInv.objetos.find(o => o.codigoBarra === codigo && o.objetoId === objId);
     if (existente) {
         existente.contador++;
     } else {
         const now = new Date().toISOString().slice(0,19).replace('T',' ');
-        const objDesc = data.inventário[0].objetos.find(o=>o.id===objId).descricao;
-        salaInv.objetos.push({
-            objetoId: objId,
-            codigoBarra: codigo,
-            dataHora: now,
-            contador: 1,
-            descricao: objDesc   // para exibição
-        });
+        data.inventario.push({unidadeId, salaId, objetoId: objId, codigoBarra: codigo, contador: 1, dataHora: now});
     }
 
-    saveData();
-    renderInventoryList();
-    document.getElementById('barcodeInput').value = '';
-    if (document.querySelector('input[name="scanMode"]:checked').value === 'loop') {
-        // mantém scanner ativo
-    } else {
-        stopScanner();
-    }
+    saveData(); renderInventoryList(); document.getElementById('barcodeInput').value = '';
+    if (document.querySelector('input[name="scanMode"]:checked').value !== 'loop') stopScanner();
 }
 
-/* ==============================================================
-   LISTA DE ITENS
-   ============================================================== */
 function renderInventoryList() {
+    const unidadeId = document.getElementById('selectUnidadeInv').value;
     const salaId = document.getElementById('selectSala').value;
-    if (!salaId) { document.getElementById('inventoryList').innerHTML=''; return; }
+    const list = document.getElementById('inventoryList');
+    list.innerHTML = '';
 
-    const salaInv = data.inventário[0].inventario.find(s => s.salaId === salaId);
-    const div = document.getElementById('inventoryList');
-    div.innerHTML = '';
+    if (!unidadeId || !salaId) return;
 
-    if (!salaInv || salaInv.objetos.length===0) {
-        div.innerHTML = '<i>Nenhum item registrado.</i>';
+    const itens = data.inventario.filter(i => i.unidadeId === unidadeId && i.salaId === salaId);
+    if (itens.length === 0) {
+        list.innerHTML = '<i>Nenhum item registrado.</i>';
         return;
     }
 
-    salaInv.objetos.forEach((item, idx) => {
-        const el = document.createElement('div');
-        el.className = 'item';
-        el.textContent = `${item.codigoBarra} – ${item.descricao} (contador: ${item.contador})`;
-        el.onclick = () => {
-            document.querySelectorAll('.item').forEach(e=>e.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedItemIndex = idx;
+    itens.forEach((item, idx) => {
+        const obj = data.objetos.find(o => o.id === item.objetoId);
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.textContent = `${item.codigoBarra} – ${obj?.descricao || item.objetoId} (x${item.contador})`;
+        div.onclick = () => {
+            document.querySelectorAll('.item').forEach(e => e.classList.remove('selected'));
+            div.classList.add('selected');
+            selectedItemIndex = data.inventario.indexOf(item);
             document.getElementById('removeItemBtn').disabled = false;
             document.getElementById('barcodeInput').value = item.codigoBarra;
         };
-        div.appendChild(el);
+        list.appendChild(div);
     });
 }
 
-/* ==============================================================
-   REMOVER ITEM SELECIONADO
-   ============================================================== */
 document.getElementById('removeItemBtn').addEventListener('click', () => {
-    const salaId = document.getElementById('selectSala').value;
-    if (selectedItemIndex === -1) return;
-
-    const salaInv = data.inventário[0].inventario.find(s => s.salaId === salaId);
-    const item = salaInv.objetos[selectedItemIndex];
-
-    if (item.contador > 1 && !confirm(`Contador = ${item.contador}. Remover mesmo assim?`)) return;
-
-    salaInv.objetos.splice(selectedItemIndex,1);
-    if (salaInv.objetos.length===0) {
-        const idx = data.inventário[0].inventario.findIndex(s=>s.salaId===salaId);
-        data.inventário[0].inventario.splice(idx,1);
+    if (selectedItemIndex >= 0) {
+        const item = data.inventario[selectedItemIndex];
+        if (item.contador > 1 && !confirm(`Contador = ${item.contador}. Remover?`)) return;
+        data.inventario.splice(selectedItemIndex, 1);
+        saveData(); renderInventoryList(); selectedItemIndex = -1; document.getElementById('removeItemBtn').disabled = true;
     }
-    saveData();
-    selectedItemIndex = -1;
-    document.getElementById('removeItemBtn').disabled = true;
-    renderInventoryList();
 });
 
-/* ==============================================================
-   LIMPAR TODA A SALA
-   ============================================================== */
 document.getElementById('clearSalaBtn').addEventListener('click', () => {
+    const unidadeId = document.getElementById('selectUnidadeInv').value;
     const salaId = document.getElementById('selectSala').value;
-    if (!salaId) return;
-    if (!confirm('Limpar TODOS os itens desta sala?')) return;
-
-    const idx = data.inventário[0].inventario.findIndex(s=>s.salaId===salaId);
-    if (idx!==-1) data.inventário[0].inventario.splice(idx,1);
-    saveData();
-    renderInventoryList();
-});
-
-/* ==============================================================
-   ENVIAR PARA GOOGLE SHEETS (com OAuth)
-   ============================================================== */
-document.getElementById('sendToSheetBtn').addEventListener('click', async () => {
-    const u = data.inventário[0].unidade;
-    const sheetId = u.sheetId;
-    const accessToken = u.accessToken;
-
-    if (!sheetId) return alert('❌ Configure o ID da Planilha na aba Unidade.');
-    if (!accessToken) return alert('❌ Autentique com Google primeiro (aba Unidade).');
-
-    const values = prepararDadosParaSheets();  // Função do código anterior
-
-    try {
-        const response = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    values: values.data  // Array de arrays: [['Cabeçalho'], ['Dados']]
-                })
-            }
-        );
-
-        if (response.ok) {
-            alert('✅ Dados enviados com sucesso para Google Sheets!');
-        } else {
-            const error = await response.json();
-            console.error('Erro Sheets API:', error);
-            alert(`❌ Erro: ${response.status} - ${error.error?.message || 'Verifique console.'}`);
-        }
-    } catch (err) {
-        console.error('Erro de rede:', err);
-        alert('❌ Erro de conexão. Verifique token e ID da planilha.');
+    if (!unidadeId || !salaId) return;
+    if (confirm('Limpar TODOS os itens desta sala?')) {
+        data.inventario = data.inventario.filter(i => !(i.unidadeId === unidadeId && i.salaId === salaId));
+        saveData(); renderInventoryList();
     }
 });
 
 /* ==============================================================
-   PREPARAR DADOS (igual ao anterior)
+   GERAR XLSX COM ESTILO
    ============================================================== */
-function prepararDadosParaSheets() {
-    const unidade = data.inventário[0].unidade;
-    const linhas = [];
+document.getElementById('downloadXlsxBtn').addEventListener('click', gerarXlsxEstilizado);
 
-    linhas.push(['UNIDADE', 'DATA_HORA', 'SALA', 'TIPO_OBJETO', 'CODIGO_BARRA', 'CONTADOR', 'DESCRICAO']);
+function gerarXlsxEstilizado() {
+    const wb = XLSX.utils.book_new();
 
-    data.inventário[0].inventario.forEach(sala => {
-        const salaDesc = data.inventário[0].locais.find(l => l.id === sala.salaId)?.descricao || '';
-        sala.objetos.forEach(item => {
-            const objDesc = data.inventário[0].objetos.find(o => o.id === item.objetoId)?.descricao || '';
-            linhas.push([
-                unidade.nome,
-                item.dataHora,
-                salaDesc,
-                objDesc,
-                item.codigoBarra,
-                item.contador,
-                ''  // Observações
-            ]);
+    // Estilos
+    const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "1A73E8" } }, alignment: { horizontal: "center" } };
+    const cellStyle = { border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+
+    // === Unidade ===
+    const unidadeRows = [['Nome', 'E-mail', 'Planilha ID']];
+    data.unidades.forEach(u => unidadeRows.push([u.nome, u.email, u.sheetId || '']));
+    const wsUnidade = XLSX.utils.aoa_to_sheet(unidadeRows);
+    applyStyle(wsUnidade, 'A1:C1', headerStyle);
+    applyBorders(wsUnidade, `A1:C${unidadeRows.length}`);
+    autoWidth(wsUnidade, unidadeRows);
+    XLSX.utils.book_append_sheet(wb, wsUnidade, 'Unidades');
+
+    // === Salas ===
+    const salaRows = [['Unidade', 'ID Sala', 'Descrição']];
+    data.salas.forEach(s => {
+        const u = data.unidades.find(un => un.id === s.unidadeId);
+        salaRows.push([u?.nome || '', s.id, s.descricao]);
+    });
+    const wsSalas = XLSX.utils.aoa_to_sheet(salaRows);
+    applyStyle(wsSalas, 'A1:C1', headerStyle);
+    applyBorders(wsSalas, `A1:C${salaRows.length}`);
+    autoWidth(wsSalas, salaRows);
+    XLSX.utils.book_append_sheet(wb, wsSalas, 'Salas');
+
+    // === Objetos ===
+    const objRows = [['ID', 'Descrição', 'Complemento']];
+    data.objetos.forEach(o => objRows.push([o.id, o.descricao, o.complemento || '']));
+    const wsObjetos = XLSX.utils.aoa_to_sheet(objRows);
+    applyStyle(wsObjetos, 'A1:C1', headerStyle);
+    applyBorders(wsObjetos, `A1:C${objRows.length}`);
+    autoWidth(wsObjetos, objRows);
+    XLSX.utils.book_append_sheet(wb, wsObjetos, 'Objetos');
+
+    // === Inventário ===
+    const invRows = [['Unidade', 'Sala', 'Objeto', 'Código', 'Contador', 'Data/Hora']];
+    data.inventario.forEach(i => {
+        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
+        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '';
+        const o = data.objetos.find(ob => ob.id === i.objetoId)?.descricao || '';
+        invRows.push([u, s, o, i.codigoBarra, i.contador, i.dataHora]);
+    });
+    const wsInv = XLSX.utils.aoa_to_sheet(invRows);
+    applyStyle(wsInv, 'A1:F1', headerStyle);
+    applyBorders(wsInv, `A1:F${invRows.length}`);
+    autoWidth(wsInv, invRows);
+    XLSX.utils.book_append_sheet(wb, wsInv, 'Inventário');
+
+    // === Relatório ===
+    const relRows = [['UNIDADE', 'SALA', 'OBJETO', 'CÓDIGO', 'QTD', 'DATA/HORA']];
+    data.inventario.forEach(i => {
+        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
+        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '';
+        const o = data.objetos.find(ob => ob.id === i.objetoId)?.descricao || '';
+        relRows.push([u, s, o, i.codigoBarra, i.contador, i.dataHora]);
+    });
+    const wsRel = XLSX.utils.aoa_to_sheet(relRows);
+    applyStyle(wsRel, 'A1:F1', headerStyle);
+    applyBorders(wsRel, `A1:F${relRows.length}`);
+    autoWidth(wsRel, relRows);
+    XLSX.utils.book_append_sheet(wb, wsRel, 'Relatório');
+
+    const fileName = `Inventario_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
+
+function applyStyle(ws, range, style) {
+    const ref = XLSX.utils.decode_range(range);
+    for (let r = ref.s.r; r <= ref.e.r; ++r) {
+        for (let c = ref.s.c; c <= ref.e.c; ++c) {
+            const cell = ws[XLSX.utils.encode_cell({r, c})];
+            if (cell) cell.s = style;
+        }
+    }
+}
+
+function applyBorders(ws, range) {
+    const ref = XLSX.utils.decode_range(range);
+    for (let r = ref.s.r; r <= ref.e.r; ++r) {
+        for (let c = ref.s.c; c <= ref.e.c; ++c) {
+            const cell = ws[XLSX.utils.encode_cell({r, c})];
+            if (!cell.s) cell.s = {};
+            cell.s.border = { top: {style:"thin"}, bottom:{style:"thin"}, left:{style:"thin"}, right:{style:"thin"} };
+        }
+    }
+}
+
+function autoWidth(ws, data) {
+    const colWidths = data[0].map((_, i) => ({wch: 10}));
+    data.forEach(row => {
+        row.forEach((val, j) => {
+            const len = val ? val.toString().length : 10;
+            if (colWidths[j].wch < len) colWidths[j].wch = len + 2;
         });
     });
-
-    return { data: linhas };
+    ws['!cols'] = colWidths;
 }
 
 /* ==============================================================
    INICIALIZAÇÃO
    ============================================================== */
 loadData();
-initGapi();  // Inicializa GAPI
-document.querySelector('.tab-btn').click();  // Abre primeira aba
+document.querySelector('.tab-btn').click();
 </script>
 </body>
 </html>
