@@ -613,6 +613,18 @@ function autoWidth(ws, data) {
    ============================================================== */
 loadData();
 document.querySelector('.tab-btn').click();
+
+/* ==============================================================
+   REGISTRO DO SERVICE WORKER (PWA)
+   ============================================================== */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registrado!', reg))
+            .catch(err => console.log('Falha ao registrar SW:', err));
+    });
+}
+
 </script>
 </body>
 </html>
