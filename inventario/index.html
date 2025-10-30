@@ -4,69 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ativo Fixo</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon-192.png" type="image/png">
-    <!-- ZXing -->
+
+    <!-- ZXing (leitor de código de barras) -->
     <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
-    <!-- SheetJS -->
+    <!-- SheetJS (XLSX) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+    <!-- Ícone de som (beep) -->
+    <audio id="beepSound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBqvc3bBgnI+OcE1JRHh7d2ZfY2pgWm5bWllbVl1bV11cV2BgYWJjZGVmZ2hpamtsbW5vcHFycXJ0dXZ3eHl6e3x9fn+AgYKKioyNjZCQkZKSk5OUlZaXmJqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/"></audio>
+
     <style>
-        body {font-family: Arial, sans-serif; margin:0; padding:0; background:#f0f2f5;}
+        :root {
+            --primary: #1a73e8;
+            --success: #4caf50;
+            --danger: #d32f2f;
+            --gray: #9e9e9e;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        body {font-family: 'Segoe UI', sans-serif; margin:0; padding:0; background:#f0f2f5;}
         header {background:#1a73e8; color:#fff; padding:15px; text-align:center;}
-        nav {background:#4285f4; padding:8px;}
-        nav button {margin:4px; padding:8px 16px; background:#5e9ff3; color:#fff; border:none; cursor:pointer; border-radius:4px;}
-        nav button.active {background:#1a73e8; font-weight:bold;}
+        nav {background:#4285f4; padding:8px; display:flex; overflow-x:auto;}
+        nav button {margin:4px; padding:8px 16px; background:#5e9ff3; color:#fff; border:none; cursor:pointer; border-radius:4px; white-space:nowrap; flex-shrink:0;}
+        nav button.active {background:var(--primary); font-weight:bold;}
         .tab {display:none; padding:20px; background:#fff; margin:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.1);}
         .tab.active {display:block;}
         .form-group {margin-bottom:12px;}
-        .form-group label {display:block; margin-bottom:4px; font-weight:bold;}
+        .form-group label {display:block; margin-bottom:4px; font-weight:bold; color:var(--dark);}
         .form-group input, .form-group select {width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;}
-        .btn {padding:8px 16px; margin:5px 5px 5px 0; cursor:pointer; border:none; border-radius:4px;}
-        .btn-primary {background:#1a73e8; color:#fff;}
-        .btn-danger {background:#d32f2f; color:#fff;}
-        .btn-success {background:#4caf50; color:#fff;}
-        .btn-secondary {background:#9e9e9e; color:#fff;}
+        .btn {padding:8px 16px; margin:2px; cursor:pointer; border:none; border-radius:4px; font-weight:bold; font-size:14px;}
+        .btn-primary {background:var(--primary); color:#fff;}
+        .btn-success {background:var(--success); color:#fff;}
+        .btn-danger {background:var(--danger); color:#fff;}
+        .btn-secondary {background:var(--gray); color:#fff;}
         table {width:100%; border-collapse:collapse; margin-top:10px;}
+
+        table.ctrl td {padding:4px; text-align:center;}
         th, td {border:1px solid #ddd; padding:10px; text-align:left;}
         th {background:#e3f2fd; font-weight:bold;}
         tr:hover {background:#f5f5f5; cursor:pointer;}
         tr.selected {background:#bbdefb !important;}
-        #video {width:100%; max-width:400px; margin:15px 0; display:none; border:2px solid #1a73e8; border-radius:8px;}
-        #inventoryList .item {padding:10px; background:#f9f9f9; margin:5px 0; border-radius:4px; cursor:pointer;}
-        #inventoryList .item.selected {background:#bbdefb; border-left:4px solid #1a73e8;}
+
+        #inventoryTable tr:hover {background:#f5f5f5;}
+        #inventoryTable tr.selected {background:#bbdefb !important;}
+
+        #video {width:100%; max-width:400px; margin:15px 0; display:none; border:2px solid var(--primary); border-radius:8px;}
+        .panel {border:1px solid #ddd; border-radius:8px; margin-bottom:15px; overflow:hidden;}
+        .panel-header {background:#e3f2fd; padding:12px; font-weight:bold; cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;}
+        .panel-header::after {content:'chevron_down'; font-family:'Material Icons'; font-size:18px;}
+        .panel-header.collapsed::after {content:'chevron_right';}
+        .panel-content {padding:15px; display:block;}
+        .panel-content.collapsed {display:none;}
+        .filter-input {width:100%; padding:6px; margin-bottom:5px; border:1px solid #ccc; border-radius:4px;}
+        .filter-checkboxes {max-height:200px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fff;}
+        .filter-checkboxes label {display:block; margin:3px 0; font-size:13px;}
         .hidden {display:none;}
+        .item {padding:8px; background:#f9f9f9; margin:5px 0; border-radius:4px; cursor:pointer;}
+        .item.selected {background:#bbdefb;}
     </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
 <header><h1>Controle de Ativo Fixo</h1></header>
 
 <nav>
-    <button class="tab-btn active" data-tab="tabUnidade">Unidades</button>
+    <button class="tab-btn" data-tab="tabUnidade">Unidades</button>
     <button class="tab-btn" data-tab="tabLocais">Salas</button>
     <button class="tab-btn" data-tab="tabObjetos">Objetos</button>
     <button class="tab-btn" data-tab="tabInventario">Registrar Inventário</button>
+    <button class="tab-btn" data-tab="tabRelatorio">Relatório</button>
 </nav>
 
 <!-- ====================== UNIDADES ====================== -->
-<div id="tabUnidade" class="tab active">
+<div id="tabUnidade" class="tab">
     <h2>Cadastro de Unidades</h2>
     <div class="form-group"><label>Nome da Unidade</label><input type="text" id="unidadeNome"></div>
     <div class="form-group"><label>E-mail</label><input type="email" id="unidadeEmail"></div>
     <div class="form-group"><label>ID da Planilha (opcional)</label><input type="text" id="unidadeSheetId"></div>
     <button class="btn btn-primary" id="addUnidade">Adicionar Unidade</button>
     <button class="btn btn-danger hidden" id="removeUnidade">Remover Selecionada</button>
-
-    <table id="tabelaUnidades">
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Planilha</th></tr></thead>
-        <tbody></tbody>
-    </table>
+    <table id="tabelaUnidades"><thead><tr><th>Nome</th><th>E-mail</th><th>Planilha</th></tr></thead><tbody></tbody></table>
 </div>
 
 <!-- ====================== SALAS ====================== -->
 <div id="tabLocais" class="tab">
-    <h2>Cadastro de Salas (vinculadas à Unidade)</h2>
+    <h2>Cadastro de Salas</h2>
     <div class="form-group">
         <label>Unidade</label>
         <select id="unidadeSelectLocais"><option value="">Selecione...</option></select>
@@ -75,11 +98,7 @@
     <div class="form-group"><label>Descrição</label><input type="text" id="salaDesc"></div>
     <button class="btn btn-primary" id="addSala">Adicionar Sala</button>
     <button class="btn btn-danger hidden" id="removeSala">Remover Selecionada</button>
-
-    <table id="tabelaSalas">
-        <thead><tr><th>Unidade</th><th>ID</th><th>Descrição</th></tr></thead>
-        <tbody></tbody>
-    </table>
+    <table id="tabelaSalas"><thead><tr><th>Unidade</th><th>ID</th><th>Descrição</th></tr></thead><tbody></tbody></table>
 </div>
 
 <!-- ====================== OBJETOS ====================== -->
@@ -90,56 +109,116 @@
     <div class="form-group"><label>Complemento</label><input type="text" id="objComp"></div>
     <button class="btn btn-primary" id="addObjeto">Adicionar Objeto</button>
     <button class="btn btn-danger hidden" id="removeObjeto">Remover Selecionado</button>
-
-    <table id="tabelaObjetos">
-        <thead><tr><th>ID</th><th>Descrição</th><th>Complemento</th></tr></thead>
-        <tbody></tbody>
-    </table>
+    <table id="tabelaObjetos"><thead><tr><th>ID</th><th>Descrição</th><th>Complemento</th></tr></thead><tbody></tbody></table>
 </div>
 
-<!-- ====================== INVENTÁRIO ====================== -->
+<!-- ====================== REGISTRAR INVENTÁRIO ====================== -->
 <div id="tabInventario" class="tab">
     <h2>Registrar Inventário</h2>
 
-    <div class="form-group">
-        <label>Unidade</label>
-        <select id="selectUnidadeInv"><option value="">Selecione...</option></select>
+    <!-- PAINEL: UNIDADE + LOCAL -->
+    <div class="panel">
+        <div class="panel-header" id="panelUnidadeLocalHeader">Unidade - Local</div>
+        <div class="panel-content" id="panelUnidadeLocal">
+            <div class="form-group">
+                <label>Unidade</label>
+                <select id="selectUnidadeInv"><option value="">Selecione...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Sala</label>
+                <select id="selectSala"><option value="">Selecione...</option></select>
+            </div>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Sala</label>
-        <select id="selectSala"><option value="">Selecione...</option></select>
+    <!-- PAINEL: DIGITAR CÓDIGO -->
+    <div class="panel">
+        <div class="panel-header" id="panelCodigoHeader">Digitar Código</div>
+        <div class="panel-content collapsed" id="panelCodigo">
+            <div class="form-group">
+                <label>Tipo de Objeto</label>
+                <select id="selectObjeto"><option value="">Selecione...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Código</label>
+                <input type="text" id="barcodeInput" placeholder="Digite ou escaneie...">
+            </div>
+            <button class="btn btn-primary" id="addItemBtn">Adicionar Item</button>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Tipo de Objeto</label>
-        <select id="selectObjeto"><option value="">Selecione...</option></select>
+    <!-- PAINEL: ESCANEAR -->
+    <div class="panel">
+        <div class="panel-header" id="panelScannerHeader">Escanear</div>
+        <div class="panel-content collapsed" id="panelScanner">
+            <table class="ctrl">
+                <tr>
+                    <td>Código de Barras</td>
+                    <td><input type="radio" name="codeType" value="BARCODE" checked></td>
+                    <td>QR Code</td>
+                    <td><input type="radio" name="codeType" value="QRCODE"></td>
+                    <td>Modo Contínuo</td>
+                    <td><input type="checkbox" id="modoContinuo"></td>
+                </tr>
+            </table>
+            <div style="margin-top:10px;">
+                <table class="ctrl">
+                <tr>
+                    <td><button class="btn btn-primary" id="scanBtn">Ler Código</button></td>
+                    <td><button class="btn btn-primary" id="addItemBtn">Adicionar Item</button></td>
+                </tr>
+                </table>
+            </div>
+            <video id="video" autoplay playsinline></video>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Código de Barras</label>
-        <input type="text" id="barcodeInput" placeholder="Digite ou escaneie">
-        <button class="btn btn-primary" id="scanBtn">Escanear</button>
-    </div>
+    <!-- PAINEL: ITENS REGISTRADOS -->
+    <div class="panel">
+        <div class="panel-header" id="panelItensHeader">Itens Registrados</div>
+        <div class="panel-content collapsed" id="panelItens">
+            <button class="btn btn-primary" id="addItemBtn">Adicionar</button>
+            <button class="btn btn-danger" id="removeItemBtn" disabled>Remover</button>
+            <button class="btn btn-secondary" id="clearSalaBtn">Limpar Sala</button>
 
-    <div class="form-group">
-        <label>Modo</label>
-        <label><input type="radio" name="scanMode" value="single" checked> Única</label>
-        <label><input type="radio" name="scanMode" value="loop"> Loop</label>
-    </div>
+            <!--<div id="inventoryList" style="margin-top:15px;"></div>-->
 
-    <video id="video" autoplay playsinline></video>
+            <h3>Itens registrados</h3>
+            <table id="inventoryTable" style="margin-top:10px;">
+                <thead>
+                    <tr>
+                        <th>OBJETO</th>
+                        <th>CÓDIGO</th>
+                        <th>QTD</th>
+                        <th>DATA/HORA</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 
     <hr>
-    <button class="btn btn-primary" id="addItemBtn">Adicionar</button>
-    <button class="btn btn-danger" id="removeItemBtn" disabled>Remover</button>
-    <button class="btn btn-secondary" id="clearSalaBtn">Limpar Sala</button>
+    <button class="btn btn-success" id="downloadXlsxBtn">Gerar Relatório XLSX</button>
+</div>
 
-    <h3>Itens registrados</h3>
-    <div id="inventoryList"></div>
-
-    <hr>
-    <button class="btn btn-success" id="downloadXlsxBtn">Gerar Relatório XLSX (com estilo)</button>
+<!-- ====================== RELATÓRIO ====================== -->
+<div id="tabRelatorio" class="tab">
+    <h2>Relatório de Inventário</h2>
+    <button class="btn btn-success" id="downloadXlsxRelatorioBtn">Gerar Relatório XLSX</button>
+    <table id="tabelaRelatorio">
+        <thead>
+            <tr>
+                <th data-col="unidade">UNIDADE <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                <th data-col="sala">SALA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                <th data-col="objeto">OBJETO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                <th data-col="codigo">CÓDIGO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                <th data-col="qtd">QTD <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                <th data-col="datahora">DATA/HORA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <script>
@@ -147,29 +226,31 @@
    DADOS GLOBAIS
    ============================================================== */
 const codeReader = new ZXing.BrowserMultiFormatReader();
+const beepSound = document.getElementById('beepSound');
 let scanning = false;
 let selectedItemIndex = -1;
 let selectedUnidadeIndex = -1;
 let selectedSalaIndex = -1;
 let selectedObjetoIndex = -1;
+let currentCodeHint = 'BARCODE';
 
 let data = {
-    unidades: [],      // [{id, nome, email, sheetId}]
-    salas: [],         // [{id, unidadeId, descricao}]
-    objetos: [],       // [{id, descricao, complemento}]
-    inventario: []     // [{unidadeId, salaId, objetoId, codigoBarra, contador, dataHora}]
+    unidades: [],
+    salas: [],
+    objetos: [],
+    inventario: []
 };
 
 /* ==============================================================
    PERSISTÊNCIA
    ============================================================== */
 function loadData() {
-    const stored = localStorage.getItem('ativoFixoDataV2');
+    const stored = localStorage.getItem('ativoFixoDataV3');
     if (stored) data = JSON.parse(stored);
     else saveData();
 }
 function saveData() {
-    localStorage.setItem('ativoFixoDataV2', JSON.stringify(data));
+    localStorage.setItem('ativoFixoDataV3', JSON.stringify(data));
 }
 
 /* ==============================================================
@@ -181,13 +262,29 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(btn.dataset.tab).classList.add('active');
         btn.classList.add('active');
-
         if (btn.dataset.tab === 'tabUnidade') renderUnidades();
         if (btn.dataset.tab === 'tabLocais') { renderUnidadeSelectLocais(); renderSalas(); }
         if (btn.dataset.tab === 'tabObjetos') renderObjetos();
         if (btn.dataset.tab === 'tabInventario') initInventarioTab();
+        if (btn.dataset.tab === 'tabRelatorio') renderRelatorio();
     });
 });
+
+/* ==============================================================
+   PAINÉIS DOBRÁVEIS
+   ============================================================== */
+function setupPanel(headerId, contentId) {
+    const header = document.getElementById(headerId);
+    const content = document.getElementById(contentId);
+    header.addEventListener('click', () => {
+        const isCollapsed = content.classList.toggle('collapsed');
+        header.classList.toggle('collapsed', isCollapsed);
+    });
+}
+setupPanel('panelUnidadeLocalHeader', 'panelUnidadeLocal');
+setupPanel('panelCodigoHeader', 'panelCodigo');
+setupPanel('panelScannerHeader', 'panelScanner');
+setupPanel('panelItensHeader', 'panelItens');
 
 /* ==============================================================
    UNIDADES
@@ -203,23 +300,18 @@ function renderUnidades() {
             tr.classList.add('selected');
             selectedUnidadeIndex = i;
             document.getElementById('removeUnidade').classList.remove('hidden');
-            preencheUnidade(u);
+            document.getElementById('unidadeNome').value = u.nome;
+            document.getElementById('unidadeEmail').value = u.email;
+            document.getElementById('unidadeSheetId').value = u.sheetId || '';
         };
         tbody.appendChild(tr);
     });
-}
-
-function preencheUnidade(u) {
-    document.getElementById('unidadeNome').value = u.nome;
-    document.getElementById('unidadeEmail').value = u.email;
-    document.getElementById('unidadeSheetId').value = u.sheetId || '';
 }
 
 document.getElementById('addUnidade').addEventListener('click', () => {
     const nome = document.getElementById('unidadeNome').value.trim();
     const email = document.getElementById('unidadeEmail').value.trim();
     if (!nome) return alert('Nome é obrigatório');
-
     if (selectedUnidadeIndex >= 0) {
         data.unidades[selectedUnidadeIndex].nome = nome;
         data.unidades[selectedUnidadeIndex].email = email;
@@ -230,7 +322,10 @@ document.getElementById('addUnidade').addEventListener('click', () => {
         const id = 'u' + Date.now();
         data.unidades.push({id, nome, email, sheetId: document.getElementById('unidadeSheetId').value.trim()});
     }
-    limpaUnidade(); saveData(); renderUnidades();
+    document.getElementById('unidadeNome').value = '';
+    document.getElementById('unidadeEmail').value = '';
+    document.getElementById('unidadeSheetId').value = '';
+    saveData(); renderUnidades();
 });
 
 document.getElementById('removeUnidade').addEventListener('click', () => {
@@ -238,15 +333,9 @@ document.getElementById('removeUnidade').addEventListener('click', () => {
         data.unidades.splice(selectedUnidadeIndex, 1);
         selectedUnidadeIndex = -1;
         document.getElementById('removeUnidade').classList.add('hidden');
-        limpaUnidade(); saveData(); renderUnidades();
+        saveData(); renderUnidades();
     }
 });
-
-function limpaUnidade() {
-    document.getElementById('unidadeNome').value = '';
-    document.getElementById('unidadeEmail').value = '';
-    document.getElementById('unidadeSheetId').value = '';
-}
 
 /* ==============================================================
    SALAS
@@ -266,7 +355,6 @@ function renderSalas() {
     tbody.innerHTML = '';
     const unidadeId = document.getElementById('unidadeSelectLocais').value;
     const salas = unidadeId ? data.salas.filter(s => s.unidadeId === unidadeId) : data.salas;
-
     salas.forEach((s, i) => {
         const u = data.unidades.find(un => un.id === s.unidadeId);
         const tr = document.createElement('tr');
@@ -289,7 +377,6 @@ document.getElementById('addSala').addEventListener('click', () => {
     const id = document.getElementById('salaId').value.trim();
     const desc = document.getElementById('salaDesc').value.trim();
     if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
-
     if (selectedSalaIndex >= 0) {
         data.salas[selectedSalaIndex].id = id;
         data.salas[selectedSalaIndex].descricao = desc;
@@ -298,7 +385,9 @@ document.getElementById('addSala').addEventListener('click', () => {
     } else {
         data.salas.push({id, unidadeId, descricao: desc});
     }
-    limpaSala(); saveData(); renderSalas();
+    document.getElementById('salaId').value = '';
+    document.getElementById('salaDesc').value = '';
+    saveData(); renderSalas();
 });
 
 document.getElementById('removeSala').addEventListener('click', () => {
@@ -306,14 +395,9 @@ document.getElementById('removeSala').addEventListener('click', () => {
         data.salas.splice(selectedSalaIndex, 1);
         selectedSalaIndex = -1;
         document.getElementById('removeSala').classList.add('hidden');
-        limpaSala(); saveData(); renderSalas();
+        saveData(); renderSalas();
     }
 });
-
-function limpaSala() {
-    document.getElementById('salaId').value = '';
-    document.getElementById('salaDesc').value = '';
-}
 
 /* ==============================================================
    OBJETOS
@@ -342,7 +426,6 @@ document.getElementById('addObjeto').addEventListener('click', () => {
     const desc = document.getElementById('objDesc').value.trim();
     const comp = document.getElementById('objComp').value.trim();
     if (!id || !desc) return alert('Preencha ID e descrição');
-
     if (selectedObjetoIndex >= 0) {
         data.objetos[selectedObjetoIndex].id = id;
         data.objetos[selectedObjetoIndex].descricao = desc;
@@ -352,7 +435,10 @@ document.getElementById('addObjeto').addEventListener('click', () => {
     } else {
         data.objetos.push({id, descricao: desc, complemento: comp});
     }
-    limpaObjeto(); saveData(); renderObjetos();
+    document.getElementById('objId').value = '';
+    document.getElementById('objDesc').value = '';
+    document.getElementById('objComp').value = '';
+    saveData(); renderObjetos();
 });
 
 document.getElementById('removeObjeto').addEventListener('click', () => {
@@ -360,15 +446,9 @@ document.getElementById('removeObjeto').addEventListener('click', () => {
         data.objetos.splice(selectedObjetoIndex, 1);
         selectedObjetoIndex = -1;
         document.getElementById('removeObjeto').classList.add('hidden');
-        limpaObjeto(); saveData(); renderObjetos();
+        saveData(); renderObjetos();
     }
 });
-
-function limpaObjeto() {
-    document.getElementById('objId').value = '';
-    document.getElementById('objDesc').value = '';
-    document.getElementById('objComp').value = '';
-}
 
 /* ==============================================================
    INVENTÁRIO
@@ -380,9 +460,7 @@ function initInventarioTab() {
 
     selUnidade.innerHTML = '<option value="">Selecione...</option>';
     data.unidades.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.id; opt.textContent = u.nome;
-        selUnidade.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.nome; selUnidade.appendChild(opt);
     });
 
     selUnidade.addEventListener('change', () => {
@@ -390,41 +468,79 @@ function initInventarioTab() {
         selSala.innerHTML = '<option value="">Selecione...</option>';
         if (unidadeId) {
             data.salas.filter(s => s.unidadeId === unidadeId).forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id; opt.textContent = s.descricao;
-                selSala.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = s.id; opt.textContent = s.descricao; selSala.appendChild(opt);
             });
         }
+        updateUnidadeLocalTitle();
         renderInventoryList();
     });
 
-    selSala.addEventListener('change', renderInventoryList);
+    selSala.addEventListener('change', () => {
+        updateUnidadeLocalTitle();
+        renderInventoryList();
+    });
 
     selObj.innerHTML = '<option value="">Selecione...</option>';
     data.objetos.forEach(o => {
-        const opt = document.createElement('option');
-        opt.value = o.id; opt.textContent = o.descricao;
-        selObj.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.descricao; selObj.appendChild(opt);
     });
+
+    updateUnidadeLocalTitle();
+    renderInventoryList();
+}
+
+function updateUnidadeLocalTitle() {
+    const u = document.getElementById('selectUnidadeInv').selectedOptions[0]?.textContent || 'Unidade';
+    const s = document.getElementById('selectSala').selectedOptions[0]?.textContent || 'Local';
+    document.getElementById('panelUnidadeLocalHeader').textContent = `${u} - ${s}`;
 }
 
 /* ==============================================================
-   SCANNER
+   SCANNER APRIMORADO
    ============================================================== */
 document.getElementById('scanBtn').addEventListener('click', () => {
-    const mode = document.querySelector('input[name="scanMode"]:checked').value;
-    if (scanning) { codeReader.reset(); scanning = false; document.getElementById('video').style.display = 'none'; return; }
+    if (scanning) { stopScanner(); return; }
+    startScanner();
+});
+
+function startScanner() {
     scanning = true;
     const video = document.getElementById('video');
     video.style.display = 'block';
-    codeReader.decodeFromVideoDevice(undefined, video, (result) => {
+    document.getElementById('panelScanner').classList.remove('collapsed');
+    document.getElementById('panelScannerHeader').classList.remove('collapsed');
+
+    const hint = document.querySelector('input[name="codeType"]:checked').value;
+    currentCodeHint = hint;
+
+    const hints = new Map();
+    if (hint === 'BARCODE') {
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.EAN_13]);
+    } else {
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+    }
+
+    codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
         if (result) {
+            beepSound.play();
             document.getElementById('barcodeInput').value = result.getText();
-            if (mode === 'single') stopScanner();
+            if (!document.getElementById('modoContinuo').checked) {
+                stopScanner();
+            }
+            addInventoryItem();
         }
-    });
-});
-function stopScanner() { codeReader.reset(); scanning = false; document.getElementById('video').style.display = 'none'; }
+    }, hints);
+}
+
+function stopScanner() {
+    codeReader.reset();
+    scanning = false;
+    document.getElementById('video').style.display = 'none';
+    if (!document.getElementById('modoContinuo').checked) {
+        document.getElementById('panelScanner').classList.add('collapsed');
+        document.getElementById('panelScannerHeader').classList.add('collapsed');
+    }
+}
 
 /* ==============================================================
    ADICIONAR ITEM
@@ -440,9 +556,7 @@ function addInventoryItem() {
 
     if (!unidadeId || !salaId || !objId || !codigo) return alert('Preencha todos os campos');
 
-    const key = `${unidadeId}-${salaId}-${objId}-${codigo}`;
     const existente = data.inventario.find(i => i.unidadeId === unidadeId && i.salaId === salaId && i.objetoId === objId && i.codigoBarra === codigo);
-
     if (existente) {
         existente.contador++;
     } else {
@@ -450,39 +564,50 @@ function addInventoryItem() {
         data.inventario.push({unidadeId, salaId, objetoId: objId, codigoBarra: codigo, contador: 1, dataHora: now});
     }
 
-    saveData(); renderInventoryList(); document.getElementById('barcodeInput').value = '';
-    if (document.querySelector('input[name="scanMode"]:checked').value !== 'loop') stopScanner();
+    saveData();
+    renderInventoryList();
+    document.getElementById('barcodeInput').value = '';
+    if (!document.getElementById('modoContinuo').checked) stopScanner();
 }
+
 
 function renderInventoryList() {
     const unidadeId = document.getElementById('selectUnidadeInv').value;
     const salaId = document.getElementById('selectSala').value;
-    const list = document.getElementById('inventoryList');
-    list.innerHTML = '';
+    const tbody = document.querySelector('#inventoryTable tbody');
+    tbody.innerHTML = '';
 
-    if (!unidadeId || !salaId) return;
+    if (!unidadeId || !salaId) {
+        return;
+    }
 
     const itens = data.inventario.filter(i => i.unidadeId === unidadeId && i.salaId === salaId);
     if (itens.length === 0) {
-        list.innerHTML = '<i>Nenhum item registrado.</i>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;"><i>Nenhum item registrado.</i></td></tr>';
         return;
     }
 
     itens.forEach((item, idx) => {
         const obj = data.objetos.find(o => o.id === item.objetoId);
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.textContent = `${item.codigoBarra} – ${obj?.descricao || item.objetoId} (x${item.contador})`;
-        div.onclick = () => {
-            document.querySelectorAll('.item').forEach(e => e.classList.remove('selected'));
-            div.classList.add('selected');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${obj?.descricao || item.objetoId}</td>
+            <td>${item.codigoBarra}</td>
+            <td>${item.contador}</td>
+            <td>${item.dataHora}</td>
+        `;
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => {
+            document.querySelectorAll('#inventoryTable tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
             selectedItemIndex = data.inventario.indexOf(item);
             document.getElementById('removeItemBtn').disabled = false;
             document.getElementById('barcodeInput').value = item.codigoBarra;
         };
-        list.appendChild(div);
+        tbody.appendChild(tr);
     });
 }
+
 
 document.getElementById('removeItemBtn').addEventListener('click', () => {
     if (selectedItemIndex >= 0) {
@@ -504,18 +629,83 @@ document.getElementById('clearSalaBtn').addEventListener('click', () => {
 });
 
 /* ==============================================================
-   GERAR XLSX COM ESTILO
+   RELATÓRIO COM FILTROS
+   ============================================================== */
+function renderRelatorio() {
+    const tbody = document.querySelector('#tabelaRelatorio tbody');
+    tbody.innerHTML = '';
+    const rows = [];
+
+    data.inventario.forEach(i => {
+        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
+        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '';
+        const o = data.objetos.find(ob => ob.id === i.objetoId)?.descricao || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u}</td><td>${s}</td><td>${o}</td><td>${i.codigoBarra}</td><td>${i.contador}</td><td>${i.dataHora}</td>`;
+        tbody.appendChild(tr);
+        rows.push({tr, data: [u, s, o, i.codigoBarra, i.contador, i.dataHora]});
+    });
+
+    setupFilters(rows);
+}
+
+function setupFilters(rows) {
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const col = input.parentElement.dataset.col;
+        const index = ['unidade','sala','objeto','codigo','qtd','datahora'].indexOf(col);
+
+        input.addEventListener('input', () => applyFilters(rows));
+        input.addEventListener('focus', () => showCheckboxFilter(input, col, index, rows));
+    });
+}
+
+function showCheckboxFilter(input, col, index, rows) {
+    let container = input.parentElement.querySelector('.filter-checkboxes');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'filter-checkboxes';
+        input.parentElement.appendChild(container);
+    }
+
+    const values = [...new Set(rows.map(r => r.data[index]))].sort();
+    container.innerHTML = values.map(v => `
+        <label><input type="checkbox" value="${v}" checked> ${v}</label>
+    `).join('');
+
+    container.querySelectorAll('input').forEach(cb => {
+        cb.addEventListener('change', () => applyFilters(rows));
+    });
+}
+
+function applyFilters(rows) {
+    const filters = {};
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const col = input.parentElement.dataset.col;
+        const checkboxes = input.parentElement.querySelectorAll('.filter-checkboxes input:checked');
+        filters[col] = [...checkboxes].map(cb => cb.value);
+    });
+
+    rows.forEach(row => {
+        const show = Object.keys(filters).every(col => {
+            const idx = ['unidade','sala','objeto','codigo','qtd','datahora'].indexOf(col);
+            return filters[col].length === 0 || filters[col].includes(row.data[idx]);
+        });
+        row.tr.style.display = show ? '' : 'none';
+    });
+}
+
+/* ==============================================================
+   GERAR XLSX ESTILIZADO
    ============================================================== */
 document.getElementById('downloadXlsxBtn').addEventListener('click', gerarXlsxEstilizado);
+document.getElementById('downloadXlsxRelatorioBtn').addEventListener('click', gerarXlsxEstilizado);
 
 function gerarXlsxEstilizado() {
     const wb = XLSX.utils.book_new();
-
-    // Estilos
     const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "1A73E8" } }, alignment: { horizontal: "center" } };
     const cellStyle = { border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
 
-    // === Unidade ===
+    // Unidades
     const unidadeRows = [['Nome', 'E-mail', 'Planilha ID']];
     data.unidades.forEach(u => unidadeRows.push([u.nome, u.email, u.sheetId || '']));
     const wsUnidade = XLSX.utils.aoa_to_sheet(unidadeRows);
@@ -524,7 +714,7 @@ function gerarXlsxEstilizado() {
     autoWidth(wsUnidade, unidadeRows);
     XLSX.utils.book_append_sheet(wb, wsUnidade, 'Unidades');
 
-    // === Salas ===
+    // Salas
     const salaRows = [['Unidade', 'ID Sala', 'Descrição']];
     data.salas.forEach(s => {
         const u = data.unidades.find(un => un.id === s.unidadeId);
@@ -536,7 +726,7 @@ function gerarXlsxEstilizado() {
     autoWidth(wsSalas, salaRows);
     XLSX.utils.book_append_sheet(wb, wsSalas, 'Salas');
 
-    // === Objetos ===
+    // Objetos
     const objRows = [['ID', 'Descrição', 'Complemento']];
     data.objetos.forEach(o => objRows.push([o.id, o.descricao, o.complemento || '']));
     const wsObjetos = XLSX.utils.aoa_to_sheet(objRows);
@@ -545,7 +735,7 @@ function gerarXlsxEstilizado() {
     autoWidth(wsObjetos, objRows);
     XLSX.utils.book_append_sheet(wb, wsObjetos, 'Objetos');
 
-    // === Inventário ===
+    // Inventário
     const invRows = [['Unidade', 'Sala', 'Objeto', 'Código', 'Contador', 'Data/Hora']];
     data.inventario.forEach(i => {
         const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
@@ -558,20 +748,6 @@ function gerarXlsxEstilizado() {
     applyBorders(wsInv, `A1:F${invRows.length}`);
     autoWidth(wsInv, invRows);
     XLSX.utils.book_append_sheet(wb, wsInv, 'Inventário');
-
-    // === Relatório ===
-    const relRows = [['UNIDADE', 'SALA', 'OBJETO', 'CÓDIGO', 'QTD', 'DATA/HORA']];
-    data.inventario.forEach(i => {
-        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
-        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '';
-        const o = data.objetos.find(ob => ob.id === i.objetoId)?.descricao || '';
-        relRows.push([u, s, o, i.codigoBarra, i.contador, i.dataHora]);
-    });
-    const wsRel = XLSX.utils.aoa_to_sheet(relRows);
-    applyStyle(wsRel, 'A1:F1', headerStyle);
-    applyBorders(wsRel, `A1:F${relRows.length}`);
-    autoWidth(wsRel, relRows);
-    XLSX.utils.book_append_sheet(wb, wsRel, 'Relatório');
 
     const fileName = `Inventario_${new Date().toISOString().slice(0,10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
@@ -614,18 +790,6 @@ function autoWidth(ws, data) {
    ============================================================== */
 loadData();
 document.querySelector('.tab-btn').click();
-
-/* ==============================================================
-   REGISTRO DO SERVICE WORKER (PWA)
-   ============================================================== */
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker registrado!', reg))
-            .catch(err => console.log('Falha ao registrar SW:', err));
-    });
-}
-
 </script>
 </body>
 </html>
