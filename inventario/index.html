@@ -92,7 +92,30 @@
         .item.selected {background:#bbdefb;}
 
         /* Tailwind overrides if needed */
-        nav { position: fixed; bottom: 0; width: 100%; z-index: 10; }
+        /*nav { position: fixed; bottom: 0; width: 100%; z-index: 10; }*/
+        nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            /*background: var(--primary);*/
+            color: white;*/
+            z-index: 100;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+        }
+        nav button {
+            flex: 1;
+            background: none;
+            border: none;
+            color: inherit;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+        nav button.active {
+            background: var(--secondary);
+        }
+        
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 8px 16px; background: #333; color: #fff; border-radius: 4px; opacity: 0; transition: opacity 0.3s; }
         .toast.show { opacity: 1; }
         @media (max-width: 768px) {
