@@ -24,8 +24,35 @@
             --light: #f8f9fa;
             --dark: #212529;
         }
-        body {font-family: 'Segoe UI', sans-serif; margin:0; padding:0; background:#f0f2f5;}
-        header {background:#1a73e8; color:#fff; padding:15px; text-align:center;}
+
+        /*body {font-family: 'Segoe UI', sans-serif; margin:0; padding:0; background:#f0f2f5;}*/
+        /*header {background:#1a73e8; color:#fff; padding:15px; text-align:center;}*/
+
+        body {
+            font-family: 'Segoe UI', sans-serif; 
+            margin:0; 
+            padding:0; 
+            padding-top: 50px;    /* Compensar o HEADER fixo no topo */
+            padding-bottom: 60px; /* Compensar o NAV fixo no rodapé */
+            background:#f0f2f5;
+        }
+        header {
+            background:#1a73e8;
+            color:#fff; 
+            padding: 10px 15px; 
+            text-align:center;
+            position: fixed; 
+            top: 0; 
+            width: 100%; 
+            z-index: 1000; /* Garante que fique acima de todos os outros elementos */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Opcional: para dar um efeito de elevação */            
+        }
+
+        header h1 {
+            font-size: 1.5rem; /* Comece com 1.5rem ou 24px e ajuste conforme o necessário */
+            margin: 0; /* Remove margens padrão do h1 para centralizar melhor */
+        }   
+        
         nav {background:#4285f4; padding:8px; display:flex; overflow-x:auto;}
         nav button {margin:4px; padding:8px 16px; background:#5e9ff3; color:#fff; border:none; cursor:pointer; border-radius:4px; white-space:nowrap; flex-shrink:0;}
         nav button.active {background:var(--primary); font-weight:bold;}
