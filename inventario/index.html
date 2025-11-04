@@ -186,10 +186,31 @@
             min-width: 0;
         }
 
+        /* Regras padrão de responsividade */
         @media (max-width: 768px) {
-            table { display: none; }
-            .cards { display: block; }
+            #tabelaUnidades { display: none; }
+            #cardsUnidades { display: block; }
+            #tabelaSalas { display: none; }
+            #cardsSalas { display: block; }
+            #tabelaObjetos { display: none; }
+            #cardsObjetos { display: block; }
+            #inventoryTable { display: none; }
+            #cardsInventario { display: block; }
             .tab { padding: 15px; }
+        }
+
+        /* Estilo de Grid para Cards do Relatório */
+        #cardsRelatorio {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 colunas no desktop */
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            #cardsRelatorio {
+                grid-template-columns: repeat(2, 1fr); /* 2 colunas no mobile */
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -363,21 +384,34 @@
 <!-- ====================== RELATÓRIO ====================== -->
 <div id="tabRelatorio" class="tab">
     <h2>Relatório de Inventário</h2>
+    
+    <div class="flex space-x-2 mb-4">
+        <button class="btn btn-secondary flex items-center" id="btnLayoutTable">
+            <span class="material-icons text-lg mr-1">view_list</span> Tabela
+        </button>
+        <button class="btn btn-secondary flex items-center" id="btnLayoutCards">
+            <span class="material-icons text-lg mr-1">grid_view</span> Cards
+        </button>
+    </div>
+
     <button class="btn btn-success" id="downloadXlsxRelatorioBtn">Gerar Relatório XLSX</button>
-    <table id="tabelaRelatorio" class="table-wrapper">
-        <thead>
-            <tr>
-                <th data-col="imagem">IMG</th>
-                <th data-col="unidade">UNIDADE <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
-                <th data-col="sala">SALA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
-                <th data-col="objeto">OBJETO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
-                <th data-col="codigo">CÓDIGO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
-                <th data-col="qtd">QTD <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
-                <th data-col="datahora">DATA/HORA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="table-wrapper" id="relatorioTableWrapper">
+        <table id="tabelaRelatorio">
+            <thead>
+                <tr>
+                    <th data-col="imagem">IMG</th>
+                    <th data-col="unidade">UNIDADE <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="sala">SALA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="objeto">OBJETO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="codigo">CÓDIGO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="qtd">QTD <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="datahora">DATA/HORA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div id="cardsRelatorio" style="display:none;"></div> 
 </div>
 
 <script>
@@ -396,6 +430,10 @@ let selectedObjetoIndex = -1;
 
 let currentCodeHint = 'BARCODE';
 let selectedImage = null;
+
+// Novo estado para controlar o layout do relatório
+let reportForcedLayout = null; // null (responsivo), 'table', ou 'cards'
+
 
 const IMAGES = [
     "armario2p.png","armario4p.png","armariometal.png","arquivogaveteiro.png",
@@ -418,7 +456,9 @@ let data = {
    ============================================================== */
 function loadData() {
     const stored = localStorage.getItem('ativoFixoDataV3');
+    const storedLayout = localStorage.getItem('reportForcedLayout');
     if (stored) data = JSON.parse(stored);
+    if (storedLayout) reportForcedLayout = storedLayout;
     else saveData();
 }
 function saveData() {
@@ -440,7 +480,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             if (btn.dataset.tab === 'tabLocais') { renderUnidadeSelectLocais(); renderSalas(); }
             if (btn.dataset.tab === 'tabObjetos') renderObjetos();
             if (btn.dataset.tab === 'tabInventario') { initInventarioTab(); }
-            if (btn.dataset.tab === 'tabRelatorio') renderRelatorio();
+            if (btn.dataset.tab === 'tabRelatorio') { renderRelatorio(); applyReportLayout(); } // Aplica layout
         }, 50);
     });
 });
@@ -481,7 +521,6 @@ function createCardsContainer(tableSelector, id) {
     return container;
 }
 
-// Removendo funções de seleção obsoletas (selectRow, selectCard, selectItem, getSelector)
 
 /* UNIDADES - CORRIGIDO: Mantida lógica de seleção original, que o usuário reportou como correta. */
 function renderUnidades() {
@@ -1202,23 +1241,99 @@ document.getElementById('clearSalaBtn').addEventListener('click', () => {
 /* ==============================================================
    RELATÓRIO
    ============================================================== */
+
+// Variável global já declarada acima. A duplicação foi removida.
+// let reportForcedLayout = null; 
+
+function isMobile() { 
+    return window.innerWidth <= 768; 
+}
+
+function applyReportLayout() {
+    const tableWrapper = document.getElementById('relatorioTableWrapper');
+    const cardsContainer = document.getElementById('cardsRelatorio');
+    const btnTable = document.getElementById('btnLayoutTable');
+    const btnCards = document.getElementById('btnLayoutCards');
+
+    // Remove cores anteriores dos botões
+    [btnTable, btnCards].forEach(btn => btn.classList.remove('btn-primary', 'btn-secondary'));
+
+    let currentLayout = reportForcedLayout;
+    
+    // Define o layout padrão se não houver layout forçado
+    if (currentLayout === null) {
+        currentLayout = isMobile() ? 'cards' : 'table';
+    }
+
+    if (currentLayout === 'cards') {
+        tableWrapper.style.display = 'none';
+        cardsContainer.style.display = 'grid'; // Usa grid
+        btnCards.classList.add('btn-primary');
+        btnTable.classList.add('btn-secondary');
+    } else { // 'table'
+        tableWrapper.style.display = 'block';
+        cardsContainer.style.display = 'none';
+        btnTable.classList.add('btn-primary');
+        btnCards.classList.add('btn-secondary');
+    }
+}
+
+function setupReportLayoutButtons() {
+    document.getElementById('btnLayoutTable').addEventListener('click', () => {
+        reportForcedLayout = 'table';
+        localStorage.setItem('reportForcedLayout', 'table');
+        applyReportLayout();
+    });
+
+    document.getElementById('btnLayoutCards').addEventListener('click', () => {
+        reportForcedLayout = 'cards';
+        localStorage.setItem('reportForcedLayout', 'cards');
+        applyReportLayout();
+    });
+}
+
 function renderRelatorio() {
     const tbody = document.querySelector('#tabelaRelatorio tbody');
+    const cardsContainer = document.getElementById('cardsRelatorio');
     tbody.innerHTML = '';
+    cardsContainer.innerHTML = ''; 
     const rows = [];
 
     data.inventario.forEach(i => {
-        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
-        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '';
+        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '—';
+        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '—';
         const o = data.objetos.find(ob => ob.id === i.objetoId);
         const imgHtml = o?.imagem ? `<img src="imagens/${o.imagem}" class="obj-img" alt="">` : '';
+        const imgCard = o?.imagem ? `<img src="imagens/${o.imagem}" alt="" style="width: 50px; height: 50px; object-fit: contain; flex-shrink: 0; margin-top: 4px;">` : ''; // Imagem para o card
+
+        // Tabela Row
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${imgHtml}</td><td>${u}</td><td>${s}</td><td>${o?.descricao || ''}</td><td>${i.codigoBarra}</td><td>${i.contador}</td><td>${i.dataHora}</td>`;
         tbody.appendChild(tr);
+
+        // Card (usando a classe 'card' base)
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="flex">
+                ${imgCard}
+                <div>
+                    <div><span class="label">Unidade:</span> <span class="value">${u}</span></div>
+                    <div><span class="label">Sala:</span> <span class="value">${s}</span></div>
+                    <div><span class="label">Objeto:</span> <span class="value">${o?.descricao || ''}</span></div>
+                    <div><span class="label">Código:</span> <span class="value">${i.codigoBarra}</span></div>
+                    <div><span class="label">QTD:</span> <span class="value">${i.contador}</span></div>
+                    <div><span class="label">Data:</span> <span class="value">${i.dataHora}</span></div>
+                </div>
+            </div>
+        `;
+        cardsContainer.appendChild(card);
+
         rows.push({tr, data: ['', u, s, o?.descricao || '', i.codigoBarra, i.contador, i.dataHora]});
     });
 
     setupFilters(rows);
+    // Nota: applyReportLayout é chamado na navegação da aba
 }
 
 /* Filtros, XLSX, etc. (mantidos iguais) */
@@ -1260,6 +1375,13 @@ function applyFilters(rows) {
             return filters[col].length === 0 || filters[col].includes(row.data[idx]);
         });
         row.tr.style.display = show ? '' : 'none';
+        
+        // Aplica o filtro nos cards (visíveis apenas no modo card)
+        const cardIndex = data.inventario.findIndex(i => i.dataHora === row.data[6]); // Encontra o item original
+        const cardElement = document.getElementById('cardsRelatorio').children[cardIndex];
+        if (cardElement) {
+             cardElement.style.display = show ? 'block' : 'none';
+        }
     });
 }
 
@@ -1389,6 +1511,7 @@ function insertImageToSheet(ws, imgPath, cell) {
 loadData();
 initImageModal();
 initObjetoCards();
+setupReportLayoutButtons(); // Inicializa botões do relatório
 
 window.addEventListener('resize', () => {
     const activeTab = document.querySelector('.tab.active');
@@ -1399,7 +1522,7 @@ window.addEventListener('resize', () => {
         if (tabId === 'tabLocais') { renderUnidadeSelectLocais(); renderSalas(); }
         if (tabId === 'tabObjetos') renderObjetos();
         if (tabId === 'tabInventario') { initInventarioTab(); }
-        if (tabId === 'tabRelatorio') renderRelatorio();
+        if (tabId === 'tabRelatorio') { renderRelatorio(); applyReportLayout(); } // Re-aplica layout ao redimensionar
     }, 100);
 });
 </script>
