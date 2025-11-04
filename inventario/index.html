@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ativo Fixo</title>
 
-    <!-- ZXing (leitor de código de barras) -->
-    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
-    <!-- SheetJS (XLSX) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ZXing (leitor de código de barras) - Adicionado ?v=1.0.1 -->
+    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js?v=1.0.1"></script>
+    <!-- SheetJS (XLSX) - Adicionado ?v=1.0.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=1.0.1"></script>
+    <!-- Tailwind CDN - Adicionado ?v=1.0.1 -->
+    <script src="https://cdn.tailwindcss.com?v=1.0.1"></script>
 
     <!-- Ícone de som (beep) -->
     <audio id="beepSound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBqvc3bBgnI+OcE1JRHh7d2ZfY2pgWm5bWllbVl1bV11cV2BgYWJjZGVmZ2hpamtsbW5vcHFycXJ0dXZ3eHl6e3x9fn+AgYKKioyNjZCQkZKSk5OUlZaXmJqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/"></audio>
@@ -821,7 +821,7 @@ function renderInventoryList() {
                 <div>
                     <div><span class="label">Objeto:</span> <span class="value">${obj?.descricao || item.objetoId}</span></div>
                     <div><span class="label">Código:</span> <span class="value">${item.codigoBarra}</span></div>
-                    <div><span class="label">Qtd:</span> <span class="value">${item.contador}</span> | <span class="label">Data:</span> <span class="value">${item.dataHora}</span></div>
+                    <div><span class="label">QTD:</span> <span class="value">${item.contador}</span> | <span class="label">Data:</span> <span class="value">${item.dataHora}</span></div>
                 </div>
             </div>
         `;
