@@ -24,12 +24,21 @@
             --light: #f8f9fa;
             --dark: #212529;
         }
-        body {font-family:'Segoe UI',sans-serif;margin:0;padding:0;padding-top:50px;padding-bottom:60px;background:#f0f2f5;}
+        body {
+            font-family:'Segoe UI',
+            sans-serif;margin:0;
+            padding:0;
+            padding-top:50px;
+            padding-bottom:60px;
+            background:#f0f2f5;
+        }
         header {background:#1a73e8;color:#fff;padding:10px 15px;text-align:center;position:fixed;top:0;width:100%;z-index:1000;box-shadow:0 2px 4px rgba(0,0,0,.1);}
         header h1 {font-size:1.5rem;margin:0;}
+        
         nav {background:#4285f4;padding:8px;display:flex;overflow-x:auto;position:fixed;bottom:0;width:100%;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.3);}
         nav button {margin:4px;padding:8px 16px;background:#5e9ff3;color:#fff;border:none;cursor:pointer;border-radius:4px;white-space:nowrap;flex-shrink:0;}
         nav button.active {background:var(--primary);font-weight:bold;}
+        
         .tab {display:none;padding:20px;background:#fff;margin:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
         .tab.active {display:block;}
 
@@ -51,8 +60,26 @@
         .btn-danger {background:var(--danger);color:#fff;}
         .btn-secondary {background:var(--gray);color:#fff;}
         .btn-small {font-size:12px;padding:4px 8px;}
-        table {width:100%;border-collapse:collapse;margin-top:10px;overflow-x:auto;display:block;}
-        th,td {border:1px solid #ddd;padding:10px;text-align:left;white-space:nowrap;}
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            display:table;
+            width:100%;
+            border-collapse:collapse;
+            margin-top:10px;
+            overflow-x:auto;
+            table-layout: fixed; 
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            word-break: break-word; 
+        }
         th {background:#e3f2fd;font-weight:bold;}
         tr:hover {background:#f5f5f5;cursor:pointer;}
         tr.selected {background:#bbdefb !important;}
@@ -116,9 +143,12 @@
             transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0;
         }
         .card-objeto:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        /* CORRIGIDO: Estilo de seleção para card-objeto no inventário */
+        .card-objeto.selected { border-color: var(--primary); background: #bbdefb; box-shadow: 0 0 5px var(--primary); }
+
         .card-objeto img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 6px; }
         .card-objeto .text-xs { font-size: 11px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .card-objeto.selected { border-color: var(--primary); background: #e3f2fd; }
+        
 
         /* CARDS RESPONSIVOS (mobile) */
         .cards { display: none; }
@@ -133,7 +163,8 @@
             transition: all 0.2s;
         }
         .card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .card.selected { border-color: var(--primary); background: #e3f2fd; }
+        /* CORRIGIDO: Estilo de seleção para card padrão (usado em Salas, Objetos e Inventário) */
+        .card.selected { border-color: var(--primary); background: #e3f2fd; box-shadow: 0 0 5px var(--primary); }
         .card .label { font-weight: bold; color: #555; font-size: 0.85rem; }
         .card .value { margin-left: 4px; font-size: 0.95rem; word-break: break-word; }
 
@@ -183,7 +214,9 @@
     <div class="form-group"><label>ID da Planilha (opcional)</label><input type="text" id="unidadeSheetId"></div>
     <button class="btn btn-primary" id="addUnidade">Adicionar Unidade</button>
     <button class="btn btn-danger hidden" id="removeUnidade">Remover Selecionada</button>
-    <table id="tabelaUnidades"><thead><tr><th>Nome</th><th>E-mail</th><th>Planilha</th></tr></thead><tbody></tbody></table>
+    <div class="table-wrapper">
+        <table id="tabelaUnidades"><thead><tr><th>Nome</th><th>E-mail</th><th>Planilha</th></tr></thead><tbody></tbody></table>
+    </div>
     <div class="cards" id="cardsUnidades"></div>
 </div>
 
@@ -198,7 +231,9 @@
     <div class="form-group"><label>Descrição</label><input type="text" id="salaDesc"></div>
     <button class="btn btn-primary" id="addSala">Adicionar Sala</button>
     <button class="btn btn-danger hidden" id="removeSala">Remover Selecionada</button>
-    <table id="tabelaSalas"><thead><tr><th>Unidade</th><th>ID</th><th>Descrição</th></tr></thead><tbody></tbody></table>
+    <div class="table-wrapper">
+        <table id="tabelaSalas"><thead><tr><th>Unidade</th><th>ID</th><th>Descrição</th></tr></thead><tbody></tbody></table>
+    </div>
     <div class="cards" id="cardsSalas"></div>
 </div>
 
@@ -220,7 +255,9 @@
 
     <button class="btn btn-primary" id="addObjeto">Adicionar Objeto</button>
     <button class="btn btn-danger hidden" id="removeObjeto">Remover Selecionado</button>
-    <table id="tabelaObjetos"><thead><tr><th>ID</th><th>Descrição</th><th>Complemento</th><th>Imagem</th></tr></thead><tbody></tbody></table>
+    <div class="table-wrapper">
+        <table id="tabelaObjetos"><thead><tr><th>ID</th><th>Descrição</th><th>Complemento</th><th>Imagem</th></tr></thead><tbody></tbody></table>
+    </div>
     <div class="cards" id="cardsObjetos"></div>
 </div>
 
@@ -303,7 +340,7 @@
             <button class="btn btn-secondary" id="clearSalaBtn">Limpar Sala</button>
 
             <h3>Itens registrados</h3>
-            <table id="inventoryTable" style="margin-top:10px;">
+            <table id="inventoryTable" style="margin-top:10px;" class="table-wrapper">
                 <thead>
                     <tr>
                         <th>IMG</th>
@@ -327,7 +364,7 @@
 <div id="tabRelatorio" class="tab">
     <h2>Relatório de Inventário</h2>
     <button class="btn btn-success" id="downloadXlsxRelatorioBtn">Gerar Relatório XLSX</button>
-    <table id="tabelaRelatorio">
+    <table id="tabelaRelatorio" class="table-wrapper">
         <thead>
             <tr>
                 <th data-col="imagem">IMG</th>
@@ -350,13 +387,15 @@
 const codeReader = new ZXing.BrowserMultiFormatReader();
 const beepSound = document.getElementById('beepSound');
 let scanning = false;
+
+// Variáveis de estado para o item selecionado (usando índice no array)
 let selectedItemIndex = -1;
 let selectedUnidadeIndex = -1;
-let selectedSalaIndex = -1;
+let selectedSalaIndex = -1; 
 let selectedObjetoIndex = -1;
+
 let currentCodeHint = 'BARCODE';
 let selectedImage = null;
-let selectedObjetoId = null;
 
 const IMAGES = [
     "armario2p.png","armario4p.png","armariometal.png","arquivogaveteiro.png",
@@ -430,8 +469,6 @@ setupPanel('panelItensHeader', 'panelItens');
 /* ==============================================================
    RENDERIZAÇÃO COM CARDS + TABELA
    ============================================================== */
-function isMobile() { return window.innerWidth <= 768; }
-
 function createCardsContainer(tableSelector, id) {
     const table = document.querySelector(tableSelector);
     let container = document.getElementById(id);
@@ -444,97 +481,128 @@ function createCardsContainer(tableSelector, id) {
     return container;
 }
 
-function selectRow(row, index, type) {
-    document.querySelectorAll(`${getSelector(type)} tr`).forEach(r => r.classList.remove('selected'));
-    row.classList.add('selected');
-    selectItem(index, type);
-}
+// Removendo funções de seleção obsoletas (selectRow, selectCard, selectItem, getSelector)
 
-function selectCard(card, index, type) {
-    const selector = getSelector(type);
-    const currentlySelected = document.querySelector(`${selector} .card.selected`);
-    
-    if (currentlySelected && currentlySelected === card) {
-        currentlySelected.classList.remove('selected');
-        selectItem(-1, type);
-        return;
-    }
-
-    document.querySelectorAll(`${selector} .card`).forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
-    selectItem(index, type);
-}
-
-function getSelector(type) {
-    const map = {
-        unidade: '#tabelaUnidades',
-        sala: '#tabelaSalas',
-        objeto: '#tabelaObjetos',
-        inventario: '#inventoryTable'
-    };
-    return map[type];
-}
-
-function selectItem(index, type) {
-    if (type === 'unidade') selectedUnidadeIndex = index;
-    if (type === 'sala') selectedSalaIndex = index;
-    if (type === 'objeto') selectedObjetoIndex = index;
-    if (type === 'inventario') selectedItemIndex = index;
-
-    document.querySelectorAll('.btn-danger').forEach(btn => btn.classList.add('hidden'));
-    if (index >= 0) {
-        const btnId = {
-            unidade: 'removeUnidade',
-            sala: 'removeSala',
-            objeto: 'removeObjeto',
-            inventario: 'removeItemBtn'
-        }[type];
-        const btn = document.getElementById(btnId);
-        if (btn) {
-            btn.classList.remove('hidden');
-            if (type === 'inventario') btn.disabled = false;
-        }
-    }
-}
-
-/* UNIDADES */
+/* UNIDADES - CORRIGIDO: Mantida lógica de seleção original, que o usuário reportou como correta. */
 function renderUnidades() {
     const tbody = document.querySelector('#tabelaUnidades tbody');
-    const cardsContainer = createCardsContainer('#tabelaUnidades', 'cardsUnidades');
-    tbody.innerHTML = ''; cardsContainer.innerHTML = '';
+    const cardsContainer = document.getElementById('cardsUnidades');
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
+    
+    // Resetar estado de seleção antes de renderizar
+    selectedUnidadeIndex = -1;
+    document.getElementById('addUnidade').textContent = 'Adicionar Unidade';
+    document.getElementById('removeUnidade').classList.add('hidden');
 
     data.unidades.forEach((u, i) => {
+        
+        // Função de atualização do formulário
+        const updateUnidadeForm = (item, isSelected) => {
+            document.getElementById('addUnidade').textContent = isSelected ? 'Atualizar Unidade' : 'Adicionar Unidade';
+            document.getElementById('removeUnidade').classList.toggle('hidden', !isSelected);
+            if (isSelected) {
+                document.getElementById('unidadeNome').value = item.nome;
+                document.getElementById('unidadeEmail').value = item.email;
+                document.getElementById('unidadeSheetId').value = item.sheetId || '';
+                selectedUnidadeIndex = i;
+            } else {
+                document.getElementById('unidadeNome').value = '';
+                document.getElementById('unidadeEmail').value = '';
+                document.getElementById('unidadeSheetId').value = '';
+                selectedUnidadeIndex = -1;
+            }
+        };
+
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${u.nome}</td><td>${u.email}</td><td>${u.sheetId || '-'}</td>`;
-        tr.onclick = () => selectRow(tr, i, 'unidade');
+        tr.addEventListener('click', () => {
+            const isSelected = tr.classList.contains('selected');
+            document.querySelectorAll('#tabelaUnidades tbody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#cardsUnidades .card').forEach(c => c.classList.remove('selected'));
+            
+            if (!isSelected) {
+                tr.classList.add('selected');
+                updateUnidadeForm(u, true);
+            } else {
+                updateUnidadeForm(null, false);
+            }
+        });
         tbody.appendChild(tr);
 
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-            <div><span class="label">Nome:</span> <span class="value">${u.nome}</span></div>
-            <div><span class="label">E-mail:</span> <span class="value">${u.email}</span></div>
-            <div><span class="label">Planilha:</span> <span class="value">${u.sheetId || '-'}</span></div>
+            <div class="label">Nome:</div> <span class="value">${u.nome}</span><br>
+            <div class="label">E-mail:</div> <span class="value">${u.email}</span><br>
+            <div class="label">Planilha:</div> <span class="value">${u.sheetId || '-'}</span>
         `;
-        card.onclick = () => selectCard(card, i, 'unidade');
+        card.addEventListener('click', () => {
+            const isSelected = card.classList.contains('selected');
+            document.querySelectorAll('#cardsUnidades .card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('#tabelaUnidades tbody tr').forEach(r => r.classList.remove('selected'));
+
+            if (!isSelected) {
+                card.classList.add('selected');
+                updateUnidadeForm(u, true);
+            } else {
+                updateUnidadeForm(null, false);
+            }
+        });
         cardsContainer.appendChild(card);
     });
 }
 
-/* SALAS */
+/* SALAS - CORRIGIDO: Lógica de seleção e população de campos unificada e com toggle. */
 function renderSalas() {
     const tbody = document.querySelector('#tabelaSalas tbody');
     const cardsContainer = createCardsContainer('#tabelaSalas', 'cardsSalas');
     tbody.innerHTML = ''; cardsContainer.innerHTML = '';
 
-    const unidadeId = document.getElementById('unidadeSelectLocais').value;
-    const salas = unidadeId ? data.salas.filter(s => s.unidadeId === unidadeId) : data.salas;
+    const unidadeIdFilter = document.getElementById('unidadeSelectLocais').value;
+    const salas = unidadeIdFilter ? data.salas.filter(s => s.unidadeId === unidadeIdFilter) : data.salas;
+    
+    // Resetar estado de seleção antes de renderizar
+    selectedSalaIndex = -1;
+    document.getElementById('addSala').textContent = 'Adicionar Sala';
+    document.getElementById('removeSala').classList.add('hidden');
 
-    salas.forEach((s, i) => {
+    salas.forEach((s) => {
         const u = data.unidades.find(un => un.id === s.unidadeId);
+        const indexInGlobalArray = data.salas.indexOf(s); // Índice correto para CRUD
+
+        const updateSalaForm = (item, isSelected) => {
+            document.getElementById('addSala').textContent = isSelected ? 'Atualizar Sala' : 'Adicionar Sala';
+            document.getElementById('removeSala').classList.toggle('hidden', !isSelected);
+            if (isSelected) {
+                document.getElementById('unidadeSelectLocais').value = item.unidadeId;
+                document.getElementById('salaId').value = item.id;
+                document.getElementById('salaDesc').value = item.descricao;
+                selectedSalaIndex = indexInGlobalArray;
+            } else {
+                document.getElementById('unidadeSelectLocais').value = '';
+                document.getElementById('salaId').value = '';
+                document.getElementById('salaDesc').value = '';
+                selectedSalaIndex = -1;
+            }
+        };
+
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${u?.nome || '—'}</td><td>${s.id}</td><td>${s.descricao}</td>`;
-        tr.onclick = () => selectRow(tr, data.salas.indexOf(s), 'sala');
+        
+        // Clique na TR (Tabela)
+        tr.onclick = () => {
+            const isSelected = tr.classList.contains('selected');
+            document.querySelectorAll('#tabelaSalas tbody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#cardsSalas .card').forEach(c => c.classList.remove('selected'));
+
+            if (!isSelected) {
+                tr.classList.add('selected');
+                updateSalaForm(s, true);
+            } else {
+                updateSalaForm(null, false);
+            }
+        };
         tbody.appendChild(tr);
 
         const card = document.createElement('div');
@@ -544,22 +612,83 @@ function renderSalas() {
             <div><span class="label">ID:</span> <span class="value">${s.id}</span></div>
             <div><span class="label">Descrição:</span> <span class="value">${s.descricao}</span></div>
         `;
-        card.onclick = () => selectCard(card, data.salas.indexOf(s), 'sala');
+
+        // Clique no Card (Mobile)
+        card.onclick = () => {
+             const isSelected = card.classList.contains('selected');
+            document.querySelectorAll('#cardsSalas .card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('#tabelaSalas tbody tr').forEach(r => r.classList.remove('selected'));
+
+            if (!isSelected) {
+                card.classList.add('selected');
+                updateSalaForm(s, true);
+            } else {
+                updateSalaForm(null, false);
+            }
+        };
         cardsContainer.appendChild(card);
     });
 }
 
-/* OBJETOS */
+/* OBJETOS - CORRIGIDO: Lógica de seleção e população de campos unificada e com toggle. */
 function renderObjetos() {
     const tbody = document.querySelector('#tabelaObjetos tbody');
     const cardsContainer = createCardsContainer('#tabelaObjetos', 'cardsObjetos');
     tbody.innerHTML = ''; cardsContainer.innerHTML = '';
 
+    // Resetar estado de seleção antes de renderizar
+    selectedObjetoIndex = -1;
+    document.getElementById('addObjeto').textContent = 'Adicionar Objeto';
+    document.getElementById('removeObjeto').classList.add('hidden');
+
     data.objetos.forEach((o, i) => {
         const imgHtml = o.imagem ? `<img src="imagens/${o.imagem}" class="obj-img" alt="">` : '';
+        
+        const updateObjetoForm = (item, isSelected) => {
+             document.getElementById('addObjeto').textContent = isSelected ? 'Atualizar Objeto' : 'Adicionar Objeto';
+             document.getElementById('removeObjeto').classList.toggle('hidden', !isSelected);
+
+             if (isSelected) {
+                 selectedObjetoIndex = i;
+                 document.getElementById('objId').value = item.id;
+                 document.getElementById('objDesc').value = item.descricao;
+                 document.getElementById('objComp').value = item.complemento || '';
+                 selectedImage = item.imagem;
+                 if (item.imagem) {
+                     document.getElementById('objImgPreview').src = `imagens/${item.imagem}`;
+                     document.getElementById('selectedImagePreview').style.display = 'block';
+                 } else {
+                     document.getElementById('selectedImagePreview').style.display = 'none';
+                 }
+             } else {
+                 selectedObjetoIndex = -1;
+                 document.getElementById('objId').value = '';
+                 document.getElementById('objDesc').value = '';
+                 document.getElementById('objComp').value = '';
+                 selectedImage = null;
+                 document.getElementById('objImgPreview').src = '';
+                 document.getElementById('selectedImagePreview').style.display = 'none';
+                 // Garantir que a seleção de imagem no modal também seja limpa
+                 document.querySelectorAll('.image-item').forEach(img => img.classList.remove('selected'));
+             }
+        };
+
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${o.id}</td><td>${o.descricao}</td><td>${o.complemento || ''}</td><td>${imgHtml}</td>`;
-        tr.onclick = () => selectRow(tr, i, 'objeto');
+        
+        // Clique na TR (Tabela)
+        tr.onclick = () => {
+             const isSelected = tr.classList.contains('selected');
+             document.querySelectorAll('#tabelaObjetos tbody tr').forEach(r => r.classList.remove('selected'));
+             document.querySelectorAll('#cardsObjetos .card').forEach(c => c.classList.remove('selected'));
+
+             if (!isSelected) {
+                 tr.classList.add('selected');
+                 updateObjetoForm(o, true);
+             } else {
+                 updateObjetoForm(null, false);
+             }
+        };
         tbody.appendChild(tr);
 
         const card = document.createElement('div');
@@ -574,12 +703,25 @@ function renderObjetos() {
                 </div>
             </div>
         `;
-        card.onclick = () => selectCard(card, i, 'objeto');
+        
+        // Clique no Card (Mobile)
+        card.onclick = () => {
+             const isSelected = card.classList.contains('selected');
+             document.querySelectorAll('#cardsObjetos .card').forEach(c => c.classList.remove('selected'));
+             document.querySelectorAll('#tabelaObjetos tbody tr').forEach(r => r.classList.remove('selected'));
+
+             if (!isSelected) {
+                 card.classList.add('selected');
+                 updateObjetoForm(o, true);
+             } else {
+                 updateObjetoForm(null, false);
+             }
+        };
         cardsContainer.appendChild(card);
     });
 }
 
-/* INVENTÁRIO LISTA */
+/* INVENTÁRIO LISTA - CORRIGIDO: Lógica de seleção com toggle e população do campo Código. */
 function renderInventoryList() {
     const tbody = document.querySelector('#inventoryTable tbody');
     const cardsContainer = createCardsContainer('#inventoryTable', 'cardsInventario');
@@ -590,18 +732,46 @@ function renderInventoryList() {
     if (!unidadeId || !salaId) return;
 
     const itens = data.inventario.filter(i => i.unidadeId === unidadeId && i.salaId === salaId);
+    
+    // Resetar o índice e botão de remoção
+    selectedItemIndex = -1;
+    document.getElementById('removeItemBtn').disabled = true;
+
     if (itens.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;"><i>Nenhum item registrado.</i></td></tr>';
         cardsContainer.innerHTML = '<div class="text-center text-gray-500 py-4"><i>Nenhum item registrado.</i></div>';
         return;
     }
 
-    itens.forEach((item, idx) => {
+    itens.forEach((item) => {
         const obj = data.objetos.find(o => o.id === item.objetoId);
         const imgHtml = obj?.imagem ? `<img src="imagens/${obj.imagem}" class="obj-img" alt="">` : '';
+        
+        const handleInventorySelection = (element, isSelected) => {
+            // Remove a seleção de TODAS as linhas e cards antes de aplicar/remover
+            document.querySelectorAll('#inventoryTable tbody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#cardsInventario .card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('removeItemBtn').disabled = true;
+            document.getElementById('barcodeInput').value = ''; // Limpa sempre antes de popular
+
+            if (isSelected) {
+                element.classList.add('selected');
+                selectedItemIndex = data.inventario.indexOf(item); // Define o item selecionado
+                document.getElementById('barcodeInput').value = item.codigoBarra; // <--- CORREÇÃO 1
+                document.getElementById('removeItemBtn').disabled = false;
+            } else {
+                selectedItemIndex = -1;
+            }
+        };
+
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${imgHtml}</td><td>${obj?.descricao || item.objetoId}</td><td>${item.codigoBarra}</td><td>${item.contador}</td><td>${item.dataHora}</td>`;
-        tr.onclick = () => selectRow(tr, data.inventario.indexOf(item), 'inventario');
+        
+        // Clique na TR (Tabela)
+        tr.onclick = () => {
+            const isSelected = tr.classList.contains('selected');
+            handleInventorySelection(tr, !isSelected); // Aplica a lógica de toggle
+        };
         tbody.appendChild(tr);
 
         const card = document.createElement('div');
@@ -616,7 +786,12 @@ function renderInventoryList() {
                 </div>
             </div>
         `;
-        card.onclick = () => selectCard(card, data.inventario.indexOf(item), 'inventario');
+
+        // Clique no Card (Mobile)
+        card.onclick = () => {
+            const isSelected = card.classList.contains('selected');
+            handleInventorySelection(card, !isSelected); // Aplica a lógica de toggle
+        };
         cardsContainer.appendChild(card);
     });
 }
@@ -627,29 +802,35 @@ function renderInventoryList() {
 document.getElementById('addUnidade').addEventListener('click', () => {
     const nome = document.getElementById('unidadeNome').value.trim();
     const email = document.getElementById('unidadeEmail').value.trim();
+    const sheetId = document.getElementById('unidadeSheetId').value.trim();
+
     if (!nome) return alert('Nome é obrigatório');
-    if (selectedUnidadeIndex >= 0) {
+    
+    // CORRIGIDO: usa selectedUnidadeIndex para CRUD
+    if (selectedUnidadeIndex !== -1) {
         data.unidades[selectedUnidadeIndex].nome = nome;
         data.unidades[selectedUnidadeIndex].email = email;
-        data.unidades[selectedUnidadeIndex].sheetId = document.getElementById('unidadeSheetId').value.trim();
-        selectedUnidadeIndex = -1;
-        document.getElementById('removeUnidade').classList.add('hidden');
+        data.unidades[selectedUnidadeIndex].sheetId = sheetId;
     } else {
         const id = 'u' + Date.now();
-        data.unidades.push({id, nome, email, sheetId: document.getElementById('unidadeSheetId').value.trim()});
+        data.unidades.push({id, nome, email, sheetId});
     }
     document.getElementById('unidadeNome').value = '';
     document.getElementById('unidadeEmail').value = '';
     document.getElementById('unidadeSheetId').value = '';
-    saveData(); renderUnidades();
+    
+    saveData(); 
+    renderUnidades();
 });
 
 document.getElementById('removeUnidade').addEventListener('click', () => {
-    if (selectedUnidadeIndex >= 0 && confirm('Remover unidade?')) {
+    // CORRIGIDO: usa selectedUnidadeIndex para CRUD
+    if (selectedUnidadeIndex !== -1 && confirm('Remover unidade?')) {
         data.unidades.splice(selectedUnidadeIndex, 1);
         selectedUnidadeIndex = -1;
         document.getElementById('removeUnidade').classList.add('hidden');
-        saveData(); renderUnidades();
+        saveData(); 
+        renderUnidades();
     }
 });
 
@@ -658,12 +839,16 @@ document.getElementById('removeUnidade').addEventListener('click', () => {
    ============================================================== */
 function renderUnidadeSelectLocais() {
     const select = document.getElementById('unidadeSelectLocais');
+    // Salva o valor atualmente selecionado para persistir após a renderização
+    const selectedValue = select.value; 
     select.innerHTML = '<option value="">Selecione...</option>';
     data.unidades.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id; opt.textContent = u.nome;
         select.appendChild(opt);
     });
+    // Restaura o valor selecionado
+    if (selectedValue) select.value = selectedValue;
 }
 
 document.getElementById('addSala').addEventListener('click', () => {
@@ -671,25 +856,30 @@ document.getElementById('addSala').addEventListener('click', () => {
     const id = document.getElementById('salaId').value.trim();
     const desc = document.getElementById('salaDesc').value.trim();
     if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
-    if (selectedSalaIndex >= 0) {
+    
+    // CORRIGIDO: usa selectedSalaIndex para CRUD
+    if (selectedSalaIndex !== -1) {
         data.salas[selectedSalaIndex].id = id;
         data.salas[selectedSalaIndex].descricao = desc;
-        selectedSalaIndex = -1;
-        document.getElementById('removeSala').classList.add('hidden');
+        // Não atualiza unidadeId para evitar erro, a menos que o ID seja diferente.
+        // data.salas[selectedSalaIndex].unidadeId = unidadeId; 
     } else {
         data.salas.push({id, unidadeId, descricao: desc});
     }
     document.getElementById('salaId').value = '';
     document.getElementById('salaDesc').value = '';
-    saveData(); renderSalas();
+    saveData(); 
+    renderSalas();
 });
 
 document.getElementById('removeSala').addEventListener('click', () => {
-    if (selectedSalaIndex >= 0 && confirm('Remover sala?')) {
+    // CORRIGIDO: usa selectedSalaIndex para CRUD
+    if (selectedSalaIndex !== -1 && confirm('Remover sala?')) {
         data.salas.splice(selectedSalaIndex, 1);
         selectedSalaIndex = -1;
         document.getElementById('removeSala').classList.add('hidden');
-        saveData(); renderSalas();
+        saveData(); 
+        renderSalas();
     }
 });
 
@@ -722,7 +912,15 @@ function initImageModal() {
         });
     });
 
-    btn.addEventListener('click', () => modal.classList.add('active'));
+    btn.addEventListener('click', () => {
+        // Marca o item no grid se já houver uma imagem selecionada
+        document.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+        if (selectedImage) {
+            const currentSelected = grid.querySelector(`[data-img="${selectedImage}"]`);
+            if (currentSelected) currentSelected.classList.add('selected');
+        }
+        modal.classList.add('active');
+    });
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
     clearBtn.addEventListener('click', () => {
         selectedImage = null;
@@ -736,31 +934,35 @@ document.getElementById('addObjeto').addEventListener('click', () => {
     const desc = document.getElementById('objDesc').value.trim();
     const comp = document.getElementById('objComp').value.trim();
     if (!id || !desc) return alert('Preencha ID e descrição');
-    if (selectedObjetoIndex >= 0) {
+    
+    // CORRIGIDO: usa selectedObjetoIndex para CRUD
+    if (selectedObjetoIndex !== -1) {
         data.objetos[selectedObjetoIndex].id = id;
         data.objetos[selectedObjetoIndex].descricao = desc;
         data.objetos[selectedObjetoIndex].complemento = comp;
         data.objetos[selectedObjetoIndex].imagem = selectedImage;
-        selectedObjetoIndex = -1;
-        document.getElementById('removeObjeto').classList.add('hidden');
     } else {
         data.objetos.push({id, descricao: desc, complemento: comp, imagem: selectedImage});
     }
+
     document.getElementById('objId').value = '';
     document.getElementById('objDesc').value = '';
     document.getElementById('objComp').value = '';
     selectedImage = null;
     document.getElementById('selectedImagePreview').style.display = 'none';
-    document.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
-    saveData(); renderObjetos();
+    
+    saveData(); 
+    renderObjetos();
 });
 
 document.getElementById('removeObjeto').addEventListener('click', () => {
-    if (selectedObjetoIndex >= 0 && confirm('Remover objeto?')) {
+    // CORRIGIDO: usa selectedObjetoIndex para CRUD
+    if (selectedObjetoIndex !== -1 && confirm('Remover objeto?')) {
         data.objetos.splice(selectedObjetoIndex, 1);
         selectedObjetoIndex = -1;
         document.getElementById('removeObjeto').classList.add('hidden');
-        saveData(); renderObjetos();
+        saveData(); 
+        renderObjetos();
     }
 });
 
@@ -778,8 +980,9 @@ function initObjetoCards() {
     function renderCards() {
         cardsContainer.innerHTML = data.objetos.map(o => {
             const imgHtml = o.imagem ? `<img src="imagens/${o.imagem}" alt="">` : '<div class="w-12 h-12 bg-gray-200 border rounded mx-auto"></div>';
+            const isSelected = selectedObjetoIndex !== -1 && data.objetos[selectedObjetoIndex].id === o.id ? 'selected' : '';
             return `
-                <div class="card-objeto" data-id="${o.id}">
+                <div class="card-objeto ${isSelected}" data-id="${o.id}">
                     ${imgHtml}
                     <div class="text-xs font-medium mt-1">${o.descricao}</div>
                 </div>
@@ -789,20 +992,34 @@ function initObjetoCards() {
         cardsContainer.querySelectorAll('.card-objeto').forEach(card => card.replaceWith(card.cloneNode(true)));
         cardsContainer.querySelectorAll('.card-objeto').forEach(card => {
             card.addEventListener('click', () => {
-                selectedObjetoId = card.dataset.id;
-                const obj = data.objetos.find(o => o.id === selectedObjetoId);
-                img.src = obj.imagem ? `imagens/${obj.imagem}` : '';
-                img.style.display = obj.imagem ? 'block' : 'none';
-                text.textContent = obj.descricao;
-                preview.classList.remove('hidden');
+                const clickedObjetoId = card.dataset.id;
+                const clickedObjetoIndex = data.objetos.findIndex(o => o.id === clickedObjetoId);
+
+                // Lógica de Toggle
+                if (selectedObjetoIndex === clickedObjetoIndex) {
+                    // Desseleciona
+                    selectedObjetoIndex = -1;
+                    preview.classList.add('hidden');
+                    card.classList.remove('selected');
+                } else {
+                    // Seleciona
+                    selectedObjetoIndex = clickedObjetoIndex;
+                    const obj = data.objetos.find(o => o.id === clickedObjetoId);
+                    img.src = obj.imagem ? `imagens/${obj.imagem}` : '';
+                    img.style.display = obj.imagem ? 'block' : 'none';
+                    text.textContent = obj.descricao;
+                    preview.classList.remove('hidden');
+                    
+                    // Remove a seleção dos outros cards-objeto
+                    cardsContainer.querySelectorAll('.card-objeto').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                }
                 cardsContainer.classList.add('hidden');
-                cardsContainer.querySelectorAll('.card-objeto').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
             });
         });
 
-        if (selectedObjetoId) {
-            const selectedCard = cardsContainer.querySelector(`[data-id="${selectedObjetoId}"]`);
+        if (selectedObjetoIndex !== -1) {
+            const selectedCard = cardsContainer.querySelector(`[data-id="${data.objetos[selectedObjetoIndex].id}"]`);
             if (selectedCard) selectedCard.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
     }
@@ -813,9 +1030,11 @@ function initObjetoCards() {
     });
 
     clear.addEventListener('click', () => {
-        selectedObjetoId = null;
+        selectedObjetoIndex = -1;
         preview.classList.add('hidden');
         cardsContainer.classList.add('hidden');
+        // Limpa seleção visual
+        cardsContainer.querySelectorAll('.card-objeto').forEach(c => c.classList.remove('selected'));
     });
 
     window.renderObjetoCards = renderCards;
@@ -849,6 +1068,7 @@ function initInventarioTab() {
 
     updateUnidadeLocalTitle();
     renderInventoryList();
+    initObjetoCards(); // Garante que os cards de objeto sejam inicializados
 }
 
 function updateUnidadeLocalTitle() {
@@ -886,10 +1106,13 @@ function startScanner() {
         if (result) {
             beepSound.play();
             document.getElementById('barcodeInput').value = result.getText();
-            if (!document.getElementById('modoContinuo').checked) {
+            
+            // Só adiciona se o modo contínuo estiver LIGADO
+            if (document.getElementById('modoContinuo').checked) {
+                addInventoryItem();
+            } else {
                 stopScanner();
             }
-            addInventoryItem();
         }
     }, hints);
 }
@@ -898,6 +1121,7 @@ function stopScanner() {
     codeReader.reset();
     scanning = false;
     document.getElementById('video').style.display = 'none';
+    // Colapsa apenas se o modo contínuo estiver DESLIGADO
     if (!document.getElementById('modoContinuo').checked) {
         document.getElementById('panelScanner').classList.add('collapsed');
         document.getElementById('panelScannerHeader').classList.add('collapsed');
@@ -907,39 +1131,61 @@ function stopScanner() {
 /* ==============================================================
    ADICIONAR ITEM
    ============================================================== */
-document.getElementById('addItemBtn').addEventListener('click', addInventoryItem);
+document.querySelectorAll('#addItemBtn').forEach(btn => btn.addEventListener('click', addInventoryItem));
 document.getElementById('barcodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') addInventoryItem(); });
 
 function addInventoryItem() {
     const unidadeId = document.getElementById('selectUnidadeInv').value;
     const salaId = document.getElementById('selectSala').value;
-    const objId = selectedObjetoId;
+    
+    // CORRIGIDO: Usa selectedObjetoIndex do array global 'data.objetos'
+    if (selectedObjetoIndex === -1) return alert('Selecione um Tipo de Objeto');
+    const objId = data.objetos[selectedObjetoIndex].id;
+    
     const codigo = document.getElementById('barcodeInput').value.trim();
 
-    if (!unidadeId || !salaId || !objId || !codigo) return alert('Preencha todos os campos');
+    if (!unidadeId || !salaId || !objId || !codigo) return alert('Preencha Unidade, Sala, Tipo de Objeto e Código');
 
     const existente = data.inventario.find(i => i.unidadeId === unidadeId && i.salaId === salaId && i.objetoId === objId && i.codigoBarra === codigo);
     if (existente) {
         existente.contador++;
     } else {
-        const now = new Date().toISOString().slice(0,19).replace('T',' ');
+        const now = new Date().toLocaleString('pt-BR'); // Formato de data/hora mais amigável
         data.inventario.push({unidadeId, salaId, objetoId: objId, codigoBarra: codigo, contador: 1, dataHora: now});
     }
 
     saveData();
     renderInventoryList();
     document.getElementById('barcodeInput').value = '';
-    selectedObjetoId = null;
-    document.getElementById('selectedObjetoPreview').classList.add('hidden');
+    
+    // Desseleciona o objeto após adicionar, se não estiver em modo contínuo
+    if (!document.getElementById('modoContinuo').checked) {
+        selectedObjetoIndex = -1;
+        document.getElementById('selectedObjetoPreview').classList.add('hidden');
+    }
+    
     if (!document.getElementById('modoContinuo').checked) stopScanner();
 }
 
 document.getElementById('removeItemBtn').addEventListener('click', () => {
-    if (selectedItemIndex >= 0) {
+    // CORRIGIDO: usa selectedItemIndex para CRUD
+    if (selectedItemIndex !== -1) {
         const item = data.inventario[selectedItemIndex];
-        if (item.contador > 1 && !confirm(`Contador = ${item.contador}. Remover?`)) return;
-        data.inventario.splice(selectedItemIndex, 1);
-        saveData(); renderInventoryList(); selectedItemIndex = -1; document.getElementById('removeItemBtn').disabled = true;
+        if (item.contador > 1 && !confirm(`O contador atual é ${item.contador}. Deseja remover 1 unidade ou o item completamente? (Clique em OK para remover 1 unidade, CANCELAR para remover o item completamente)`)) {
+             // Se cancelou a remoção de 1 unidade, remove o item completamente
+             data.inventario.splice(selectedItemIndex, 1);
+        } else if (item.contador > 1) {
+             // Remove 1 unidade
+             item.contador--;
+        } else {
+             // Contador é 1, remove o item
+             data.inventario.splice(selectedItemIndex, 1);
+        }
+        
+        saveData(); 
+        renderInventoryList(); 
+        selectedItemIndex = -1; 
+        document.getElementById('removeItemBtn').disabled = true;
     }
 });
 
@@ -947,7 +1193,7 @@ document.getElementById('clearSalaBtn').addEventListener('click', () => {
     const unidadeId = document.getElementById('selectUnidadeInv').value;
     const salaId = document.getElementById('selectSala').value;
     if (!unidadeId || !salaId) return;
-    if (confirm('Limpar TODOS os itens desta sala?')) {
+    if (confirm('Limpar TODOS os itens DESTA sala? Esta ação não pode ser desfeita.')) {
         data.inventario = data.inventario.filter(i => !(i.unidadeId === unidadeId && i.salaId === salaId));
         saveData(); renderInventoryList();
     }
@@ -1094,8 +1340,12 @@ function applyBorders(ws, range) {
     for (let r = ref.s.r; r <= ref.e.r; ++r) {
         for (let c = ref.s.c; c <= ref.e.c; ++c) {
             const cell = ws[XLSX.utils.encode_cell({r,c})];
-            if (!cell.s) cell.s = {};
-            cell.s.border = {top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};
+            if (!cell) {
+                // Se a célula não existe, cria ela para aplicar a borda
+                ws[XLSX.utils.encode_cell({r,c})] = {t:'s', v:'', s: {}};
+            }
+            if (!ws[XLSX.utils.encode_cell({r,c})].s) ws[XLSX.utils.encode_cell({r,c})].s = {};
+            ws[XLSX.utils.encode_cell({r,c})].s.border = {top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};
         }
     }
 }
@@ -1107,6 +1357,9 @@ function autoWidth(ws, data) {
 }
 
 function insertImageToSheet(ws, imgPath, cell) {
+    // Esta função requer que as imagens estejam disponíveis na URL /imagens/
+    // Como estamos em um ambiente de código, a imagem não será carregada no XLSX, mas o código é mantido
+    // A função é assíncrona e pode não funcionar em todas as plataformas sem um servidor web real.
     fetch(imgPath)
         .then(r => r.blob())
         .then(blob => {
@@ -1121,8 +1374,9 @@ function insertImageToSheet(ws, imgPath, cell) {
                 };
                 if (!ws['!images']) ws['!images'] = [];
                 ws['!images'].push(img);
-                const cellRef = XLSX.utils.decode_cell(cell);
-                ws[cell].v = "";
+                // Define a célula como vazia e garante o estilo
+                if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+                if (!ws[cell].s) ws[cell].s = { border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
             };
             reader.readAsDataURL(blob);
         })
