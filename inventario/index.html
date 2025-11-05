@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ativo Fixo</title>
 
-    <!-- ZXing (leitor de código de barras) - Adicionado ?v=1.0.2 -->
-    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js?v=1.0.2"></script>
-    <!-- SheetJS (XLSX) - Adicionado ?v=1.0.2 -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=1.0.2"></script>
-    <!-- Tailwind CDN - Adicionado ?v=1.0.2 -->
-    <script src="https://cdn.tailwindcss.com?v=1.0.2"></script>
+    <!-- ZXing (leitor de código de barras) - Adicionado ?v=1.0.3 -->
+    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js?v=1.0.3"></script>
+    <!-- SheetJS (XLSX) - Adicionado ?v=1.0.3 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=1.0.3"></script>
+    <!-- Tailwind CDN - Adicionado ?v=1.0.3 -->
+    <script src="https://cdn.tailwindcss.com?v=1.0.3"></script>
 
     <!-- Ícone de som (beep) -->
     <audio id="beepSound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBqvc3bBgnI+OcE1JRHh7d2ZfY2pgWm5bWllbVl1bV11cV2BgYWJjZGVmZ2hpamtsbW5vcHFycXJ0dXZ3eHl6e3x9fn+AgYKKioyNjZCQkZKSk5OUlZaXmJqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/"></audio>
@@ -85,7 +85,61 @@
         tr.selected {background:#bbdefb !important;}
         #inventoryTable tr:hover {background:#f5f5f5;}
         #inventoryTable tr.selected {background:#bbdefb !important;}
-        #video {width:100%;max-width:400px;margin:15px 0;display:none;border:2px solid var(--primary);border-radius:8px;}
+        
+        /* Contêiner da Câmera para posicionamento do overlay */
+        #videoContainer {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto; /* Centraliza */
+            display: none;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #videoContainer.active {
+            display: block;
+        }
+
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        /* Estilos do Frame de Enquadramento */
+        .scan-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .scan-frame::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px dashed rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 0 100vh rgba(0, 0, 0, 0.5); /* Efeito de máscara */
+        }
+
+        /* Layout para Código de Barras (Retangular) */
+        .barcode-frame::before {
+            width: 90%;
+            height: 20%;
+            border-radius: 4px;
+        }
+
+        /* Layout para QR Code (Quadrado) */
+        .qrcode-frame::before {
+            width: 70%;
+            height: 70%;
+            border-radius: 4px;
+        }
+
         .panel {border:1px solid #ddd;border-radius:8px;margin-bottom:15px;overflow:hidden;}
         .panel-header {background:#e3f2fd;padding:12px;font-weight:bold;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;}
         .panel-header::after {content:'chevron_down';font-family:'Material Icons';font-size:18px;}
@@ -345,18 +399,21 @@
                 <table class="ctrl">
                 <tr>
                     <td><button class="btn btn-primary" id="scanBtn">Ler Código</button></td>
-                    <td><button class="btn btn-primary" id="addItemBtn">Adicionar Item</button></td>
                 </tr>
                 </table>
             </div>
-            <video id="video" autoplay playsinline></video>
+            <!-- Contêiner para a câmera e o frame de enquadramento -->
+            <div id="videoContainer">
+                <video id="video" autoplay playsinline></video>
+                <div id="scanFrame" class="scan-frame barcode-frame"></div>
+            </div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-header" id="panelItensHeader">Itens Registrados</div>
         <div class="panel-content collapsed" id="panelItens">
-            <button class="btn btn-primary" id="addItemBtn">Adicionar</button>
+            <!-- Removido o botão de Adicionar duplicado aqui -->
             <button class="btn btn-danger" id="removeItemBtn" disabled>Remover</button>
             <button class="btn btn-secondary" id="clearSalaBtn">Limpar Sala</button>
 
@@ -796,7 +853,7 @@ function renderInventoryList() {
             if (isSelected) {
                 element.classList.add('selected');
                 selectedItemIndex = data.inventario.indexOf(item); // Define o item selecionado
-                document.getElementById('barcodeInput').value = item.codigoBarra; // <--- CORREÇÃO 1
+                document.getElementById('barcodeInput').value = item.codigoBarra; 
                 document.getElementById('removeItemBtn').disabled = false;
             } else {
                 selectedItemIndex = -1;
@@ -1124,53 +1181,94 @@ document.getElementById('scanBtn').addEventListener('click', () => {
     startScanner();
 });
 
+// Adiciona listener para trocar o frame ao mudar o tipo de código
+document.querySelectorAll('input[name="codeType"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        currentCodeHint = e.target.value;
+        const scanFrame = document.getElementById('scanFrame');
+        if (currentCodeHint === 'BARCODE') {
+            scanFrame.classList.remove('qrcode-frame');
+            scanFrame.classList.add('barcode-frame');
+        } else {
+            scanFrame.classList.remove('barcode-frame');
+            scanFrame.classList.add('qrcode-frame');
+        }
+        // Reinicia o scanner se já estiver ativo para aplicar o novo hint/config
+        if(scanning) { stopScanner(); startScanner(); }
+    });
+});
+
+
 function startScanner() {
     scanning = true;
+    const videoContainer = document.getElementById('videoContainer');
     const video = document.getElementById('video');
-    video.style.display = 'block';
+    const scanFrame = document.getElementById('scanFrame');
+    
+    // Configura o contêiner da câmera
+    videoContainer.classList.add('active');
+    
+    // Atualiza a classe do frame
+    scanFrame.className = 'scan-frame ' + (currentCodeHint === 'BARCODE' ? 'barcode-frame' : 'qrcode-frame');
+
     document.getElementById('panelScanner').classList.remove('collapsed');
     document.getElementById('panelScannerHeader').classList.remove('collapsed');
 
-    const hint = document.querySelector('input[name="codeType"]:checked').value;
-    currentCodeHint = hint;
-
     const hints = new Map();
-    if (hint === 'BARCODE') {
+    if (currentCodeHint === 'BARCODE') {
         hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.EAN_13]);
     } else {
         hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
     }
+
+    // Configurações de restrição da câmera (para tentar desligar autofoco)
+    const constraints = {
+        video: {
+            facingMode: 'environment', // Preferir a câmera traseira
+            advanced: [
+                { focusMode: 'manual' }, // Tentar desligar autofoco
+                { focusMode: 'fixed' }, // Outra tentativa de foco fixo
+                { focusMode: 'single-shot' } // Outra tentativa
+            ]
+        }
+    };
 
     codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
         if (result) {
             beepSound.play();
             document.getElementById('barcodeInput').value = result.getText();
             
-            // Só adiciona se o modo contínuo estiver LIGADO
             if (document.getElementById('modoContinuo').checked) {
                 addInventoryItem();
             } else {
                 stopScanner();
+                // Se não está em modo contínuo, adiciona o item após parar o scanner
+                addInventoryItem(); 
             }
         }
-    }, hints);
+    }, hints, constraints); // Passa constraints para o decodeFromVideoDevice
+
+    document.getElementById('scanBtn').textContent = 'Parar Leitura';
 }
 
 function stopScanner() {
     codeReader.reset();
     scanning = false;
-    document.getElementById('video').style.display = 'none';
-    // Colapsa apenas se o modo contínuo estiver DESLIGADO
+    document.getElementById('videoContainer').classList.remove('active');
+    
     if (!document.getElementById('modoContinuo').checked) {
         document.getElementById('panelScanner').classList.add('collapsed');
         document.getElementById('panelScannerHeader').classList.add('collapsed');
     }
+
+    document.getElementById('scanBtn').textContent = 'Ler Código';
 }
 
 /* ==============================================================
    ADICIONAR ITEM
    ============================================================== */
-document.querySelectorAll('#addItemBtn').forEach(btn => btn.addEventListener('click', addInventoryItem));
+// Removido o botão de Adicionar duplicado no painel Scanner
+document.getElementById('addItemBtn').addEventListener('click', addInventoryItem); 
 document.getElementById('barcodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') addInventoryItem(); });
 
 function addInventoryItem() {
@@ -1178,12 +1276,14 @@ function addInventoryItem() {
     const salaId = document.getElementById('selectSala').value;
     
     // CORRIGIDO: Usa selectedObjetoIndex do array global 'data.objetos'
-    if (selectedObjetoIndex === -1) return alert('Selecione um Tipo de Objeto');
+    if (selectedObjetoIndex === -1 || !data.objetos[selectedObjetoIndex]) return alert('Selecione um Tipo de Objeto');
     const objId = data.objetos[selectedObjetoIndex].id;
     
     const codigo = document.getElementById('barcodeInput').value.trim();
 
-    if (!unidadeId || !salaId || !objId || !codigo) return alert('Preencha Unidade, Sala, Tipo de Objeto e Código');
+    // Verificação de campos de Unidade e Sala
+    if (!unidadeId || !salaId) return alert('Selecione a Unidade e a Sala antes de registrar o item.');
+    if (!codigo) return alert('O campo Código não pode estar vazio.');
 
     const existente = data.inventario.find(i => i.unidadeId === unidadeId && i.salaId === salaId && i.objetoId === objId && i.codigoBarra === codigo);
     if (existente) {
@@ -1202,8 +1302,6 @@ function addInventoryItem() {
         selectedObjetoIndex = -1;
         document.getElementById('selectedObjetoPreview').classList.add('hidden');
     }
-    
-    if (!document.getElementById('modoContinuo').checked) stopScanner();
 }
 
 document.getElementById('removeItemBtn').addEventListener('click', () => {
