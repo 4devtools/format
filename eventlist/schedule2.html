@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda de Execução de Pipelines</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 20px;
+      background: #f9fafb;
+      color: #111827;
+      line-height: 1.5;
+    }
+    h1 {
+      color: #1d4ed8;
+      margin-bottom: 0.5rem;
+    }
+    p.instruction {
+      margin: 8px 0 12px 0;
+      font-size: 1.05rem;
+    }
+    #upload-area {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 12px 0 20px 0;
+    }
+    #drop-zone {
+      border: 2px dashed #9ca3af;
+      border-radius: 8px;
+      padding: 8px 16px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 280px;
+    }
+    #drop-zone:hover, #drop-zone.dragover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.92em;
+      margin-top: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td.filial-list, td.sistema-list {
+      white-space: pre-wrap;      /* permite quebra de linha */
+      word-break: break-word;
+      line-height: 1.4;
+    }
+    .pipeline {
+      background: #dbeafe;
+      font-weight: bold;
+      vertical-align: top;
+    }
+    .row-even { background: #f3f4f6; }
+    .active {
+      background: #bbf7d0 !important;
+      font-weight: bold;
+      color: #166534;
+      text-align: center;
+    }
+    #status {
+      margin: 15px 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      max-width: 800px;
+    }
+    .success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    /* Container com rolagem */
+    #table-container {
+    overflow: auto;
+    max-height: 85vh;
+    border: 1px solid #d1d5db;
+    }
+
+    table {
+    border-collapse: separate; /* Necessário para sticky funcionar bem */
+    border-spacing: 0;
+    }
+
+    /* Fixar Cabeçalho */
+    thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #eff6ff;
+    }
+
+    /* Fixar Colunas à Esquerda */
+    .sticky-col {
+    position: sticky;
+    background: white;
+    z-index: 5;
+    border-right: 2px solid #d1d5db !important;
+    }
+
+    /* Ajuste de profundidade para o cruzamento Canto Superior Esquerdo */
+    thead tr:first-child th:nth-child(-n+5),
+    thead tr:last-child td:nth-child(-n+5) {
+    position: sticky;
+    left: 0;
+    z-index: 15;
+    }
+
+    /* Definição de larguras fixas e offsets para as colunas fixas */
+    /* Pipeline */
+    th:nth-child(1), .pipeline { left: 0; min-width: 150px; }
+    /* Instrução */
+    th:nth-child(2), td:nth-child(2) { left: 150px; min-width: 200px; position: sticky; background: inherit; z-index: 5; }
+    /* Filial */
+    th:nth-child(3), td:nth-child(3) { left: 350px; min-width: 100px; position: sticky; background: inherit; z-index: 5; }
+    /* Sistema */
+    th:nth-child(4), td:nth-child(4) { left: 450px; min-width: 100px; position: sticky; background: inherit; z-index: 5; }
+    /* Horário */
+    th:nth-child(5), td:nth-child(5) { left: 550px; min-width: 100px; position: sticky; background: inherit; z-index: 5; }
+
+  </style>
+</head>
+<body>
+
+<h1>Visualizador de Agenda de Pipelines</h1>
+<p class="instruction">Arraste o arquivo <code>eventlist.json</code> ou use o campo abaixo:</p>
+
+<div id="upload-area">
+  <div id="drop-zone">
+    <strong>Solte o JSON aqui</strong> ou clique para selecionar
+  </div>
+  <input type="file" id="file-input" accept=".json" style="display:none;">
+</div>
+
+<div id="status"></div>
+<div id="table-container"></div>
+
+<script>
+// Helpers
+function cleanCron(cron) {
+  if (!cron) return '';
+  return cron.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').replace(/,\s*$/, '').trim();
+}
+
+function getMinutesFromCron(cron) {
+  const cleaned = cleanCron(cron);
+  if (!cleaned) return new Set();
+  const parts = cleaned.split(/\s+/);
+  if (parts.length < 5) return new Set();
+  const minutePart = parts[0];
+  const minutes = new Set();
+  try {
+    if (minutePart === '*') {
+      for (let i = 0; i < 60; i++) minutes.add(i);
+    } else if (minutePart.startsWith('*/')) {
+      const step = parseInt(minutePart.slice(2));
+      if (!isNaN(step) && step > 0 && step <= 59) {
+        for (let i = 0; i < 60; i += step) minutes.add(i);
+      }
+    } else {
+      minutePart.split(',').forEach(m => {
+        const trimmed = m.trim();
+        if (trimmed === '') return;
+        const num = parseInt(trimmed);
+        if (!isNaN(num) && num >= 0 && num < 60) minutes.add(num);
+      });
+    }
+  } catch (e) {}
+  return minutes;
+}
+
+function formatList(value) {
+  if (value === undefined || value === null) return '-';
+  if (Array.isArray(value)) {
+    return value.join('<br>');  // quebra de linha para listas longas
+  }
+  if (typeof value === 'string') return value.trim();
+  return String(value);
+}
+
+function renderTable(config) {
+  const container = document.getElementById('table-container');
+  container.innerHTML = '';
+
+  if (!config?.eventlist?.length) {
+    container.innerHTML = '<p style="color:#991b1b">JSON sem eventlist ou inválido</p>';
+    return;
+  }
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+
+  ['Pipeline', 'Instrução/Evento', 'Filial', 'Sistema', 'Horário'].forEach(text => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    headerRow.appendChild(th);
+  });
+
+  const minTh = document.createElement('th');
+  minTh.colSpan = 60;
+  minTh.textContent = 'Minutos da hora (00–59)';
+  headerRow.appendChild(minTh);
+  thead.appendChild(headerRow);
+
+  const numRow = document.createElement('tr');
+  for (let i = 0; i < 5; i++) numRow.appendChild(document.createElement('td'));
+  for (let m = 0; m < 60; m++) {
+    const td = document.createElement('td');
+    td.style.fontSize = '0.78em';
+    td.style.padding = '3px 2px';
+    td.textContent = m.toString().padStart(2, '0');
+    numRow.appendChild(td);
+  }
+  thead.appendChild(numRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  let globalRow = 0;
+
+  config.eventlist.forEach(pipe => {
+    if (!pipe.ativoPipeline) return;
+
+    const activeSchedules = pipe.schedules.filter(s => s.ativoSchedule);
+    if (activeSchedules.length === 0) return;
+
+    activeSchedules.forEach((sch, idx) => {
+    const row = document.createElement('tr');
+    if (globalRow % 2 === 0) row.classList.add('row-even');
+
+      // Coluna 1: Pipeline (Apenas cria o TD se for o primeiro índice do grupo)
+      if (idx === 0) {
+          const tdPipe = document.createElement('td');
+          tdPipe.textContent = pipe.pipename;
+          tdPipe.rowSpan = activeSchedules.length;
+          tdPipe.classList.add('pipeline', 'sticky-col');
+          tdPipe.style.left = "0px";
+          row.appendChild(tdPipe);
+      }
+
+      // Coluna 2: Instrução/Evento
+      const tdInst = document.createElement('td');
+      tdInst.textContent = sch.instruction || sch.eventName || sch.evento || sch.target || '-';
+      row.appendChild(tdInst);
+
+      // Coluna 3: Filial
+      const tdFilial = document.createElement('td');
+      tdFilial.className = 'filial-list';
+      tdFilial.innerHTML = formatList(sch.filiais);
+      row.appendChild(tdFilial);
+
+      // Coluna 4: Sistema
+      const tdSistema = document.createElement('td');
+      tdSistema.className = 'sistema-list';
+      tdSistema.innerHTML = formatList(sch.sistemas);
+      row.appendChild(tdSistema);
+
+      // Coluna 5: Horário
+      const tdHorario = document.createElement('td');
+      const cronParts = (sch.cron || '').split(/\s+/);
+      tdHorario.textContent = cronParts.slice(1).join(' ') || sch.cron || '-';
+      row.appendChild(tdHorario);
+
+      // Colunas 6+: Minutos
+      const mins = getMinutesFromCron(sch.cron);
+      for (let m = 0; m < 60; m++) {
+        const td = document.createElement('td');
+        if (mins.has(m)) {
+          td.className = 'active';
+          td.textContent = 'X';
+        }
+        row.appendChild(td);
+      }
+
+      tbody.appendChild(row);
+      globalRow++;
+    });
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+// Drag & Drop + File
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const statusEl = document.getElementById('status');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', e => {
+  const file = e.target.files?.[0];
+  if (file) processFile(file);
+});
+
+['dragover', 'dragenter'].forEach(name => {
+  dropZone.addEventListener(name, e => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+});
+
+['dragleave', 'drop'].forEach(name => {
+  dropZone.addEventListener(name, e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+  });
+});
+
+dropZone.addEventListener('drop', e => {
+  const file = e.dataTransfer?.files?.[0];
+  if (file) processFile(file);
+});
+
+function processFile(file) {
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    statusEl.innerHTML = '<span style="color:#991b1b">Selecione um arquivo .json</span>';
+    return;
+  }
+
+  statusEl.textContent = 'Carregando...';
+  statusEl.style.background = '#fefce8';
+  statusEl.style.color = '#854d0e';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      renderTable(data);
+      statusEl.textContent = `Carregado com sucesso — Ambiente: ${data.ambiente || '?'} — ${data.eventlist?.length || 0} pipelines`;
+      statusEl.style.background = '#ecfdf5';
+      statusEl.style.color = '#065f46';
+      statusEl.style.border = '1px solid #a7f3d0';
+    } catch (err) {
+      statusEl.innerHTML = `<span style="color:#991b1b">Erro ao parsear JSON: ${err.message}</span><br>
+        <small>Verifique se o arquivo está bem formado.</small>`;
+      statusEl.style.background = '#fef2f2';
+      statusEl.style.border = '1px solid #fecaca';
+    }
+  };
+  reader.onerror = () => {
+    statusEl.innerHTML = '<span style="color:#991b1b">Falha ao ler o arquivo</span>';
+    statusEl.style.background = '#fef2f2';
+  };
+  reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
