@@ -967,13 +967,13 @@ function gerarProximoId(prefixo, lista, tamanho) {
 
     
 document.getElementById('addSala').addEventListener('click', () => {
-    const unidadeId = document.getElementById('unidadeSelectLocais').value;
+    let unidadeId = document.getElementById('unidadeSelectLocais').value;
+    let id = document.getElementById('salaId').value.trim();
     // AUTO ID
     if (!id) {
         id = gerarProximoId('SL', data.salas, 3);
     }
-    id = document.getElementById('salaId').value.trim();
-    desc = document.getElementById('salaDesc').value.trim();
+    let desc = document.getElementById('salaDesc').value.trim();
 
     if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
 
@@ -1050,9 +1050,9 @@ function initImageModal() {
 }
 
 document.getElementById('addObjeto').addEventListener('click', () => {
-    const id = document.getElementById('objId').value.trim();
-    const desc = document.getElementById('objDesc').value.trim();
-    const comp = document.getElementById('objComp').value.trim();
+    let id = document.getElementById('objId').value.trim();
+    let desc = document.getElementById('objDesc').value.trim();
+    let comp = document.getElementById('objComp').value.trim();
 
     // AUTO ID
     if (!id) {
