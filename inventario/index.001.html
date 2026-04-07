@@ -970,13 +970,14 @@ document.getElementById('addSala').addEventListener('click', () => {
     const unidadeId = document.getElementById('unidadeSelectLocais').value;
     const id = document.getElementById('salaId').value.trim();
     const desc = document.getElementById('salaDesc').value.trim();
-    if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
 
     // AUTO ID
     if (!id) {
         id = gerarProximoId('SL', data.salas, 3);
     }
-    
+
+    if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
+
     // CORRIGIDO: usa selectedSalaIndex para CRUD
     if (selectedSalaIndex !== -1) {
         data.salas[selectedSalaIndex].id = id;
@@ -1053,12 +1054,13 @@ document.getElementById('addObjeto').addEventListener('click', () => {
     const id = document.getElementById('objId').value.trim();
     const desc = document.getElementById('objDesc').value.trim();
     const comp = document.getElementById('objComp').value.trim();
-    if (!id || !desc) return alert('Preencha ID e descrição');
 
     // AUTO ID
     if (!id) {
         id = gerarProximoId('OB', data.objetos, 4);
     }
+    
+    if (!id || !desc) return alert('Preencha ID e descrição');
 
     // CORRIGIDO: usa selectedObjetoIndex para CRUD
     if (selectedObjetoIndex !== -1) {
