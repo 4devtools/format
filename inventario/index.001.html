@@ -968,13 +968,12 @@ function gerarProximoId(prefixo, lista, tamanho) {
     
 document.getElementById('addSala').addEventListener('click', () => {
     const unidadeId = document.getElementById('unidadeSelectLocais').value;
-    const id = document.getElementById('salaId').value.trim();
-    const desc = document.getElementById('salaDesc').value.trim();
-
     // AUTO ID
     if (!id) {
         id = gerarProximoId('SL', data.salas, 3);
     }
+    id = document.getElementById('salaId').value.trim();
+    desc = document.getElementById('salaDesc').value.trim();
 
     if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
 
