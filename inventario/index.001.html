@@ -947,11 +947,35 @@ function renderUnidadeSelectLocais() {
     if (selectedValue) select.value = selectedValue;
 }
 
+
+/* ===================== NOVA FUNÇÃO ===================== */
+function gerarProximoId(prefixo, lista, tamanho) {
+    const regex = new RegExp(`^${prefixo}(\\d+)$`);
+    let max = 0;
+
+    lista.forEach(item => {
+        const match = item.id?.match(regex);
+        if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > max) max = num;
+        }
+    });
+
+    const proximo = max + 1;
+    return prefixo + String(proximo).padStart(tamanho, '0');
+}
+
+    
 document.getElementById('addSala').addEventListener('click', () => {
     const unidadeId = document.getElementById('unidadeSelectLocais').value;
     const id = document.getElementById('salaId').value.trim();
     const desc = document.getElementById('salaDesc').value.trim();
     if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
+
+    // AUTO ID
+    if (!id) {
+        id = gerarProximoId('SL', data.salas, 3);
+    }
     
     // CORRIGIDO: usa selectedSalaIndex para CRUD
     if (selectedSalaIndex !== -1) {
@@ -1030,7 +1054,12 @@ document.getElementById('addObjeto').addEventListener('click', () => {
     const desc = document.getElementById('objDesc').value.trim();
     const comp = document.getElementById('objComp').value.trim();
     if (!id || !desc) return alert('Preencha ID e descrição');
-    
+
+    // AUTO ID
+    if (!id) {
+        id = gerarProximoId('OB', data.objetos, 4);
+    }
+
     // CORRIGIDO: usa selectedObjetoIndex para CRUD
     if (selectedObjetoIndex !== -1) {
         data.objetos[selectedObjetoIndex].id = id;
