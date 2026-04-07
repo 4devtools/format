@@ -1,1 +1,1628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Ativo Fixo</title>
 
+    <!-- ZXing (leitor de código de barras) - Adicionado ?v=1.0.3 -->
+    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js?v=1.0.3"></script>
+    <!-- SheetJS (XLSX) - Adicionado ?v=1.0.3 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=1.0.3"></script>
+    <!-- Tailwind CDN - Adicionado ?v=1.0.3 -->
+    <script src="https://cdn.tailwindcss.com?v=1.0.3"></script>
+
+    <!-- Ícone de som (beep) -->
+    <audio id="beepSound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBqvc3bBgnI+OcE1JRHh7d2ZfY2pgWm5bWllbVl1bV11cV2BgYWJjZGVmZ2hpamtsbW5vcHFycXJ0dXZ3eHl6e3x9fn+AgYKKioyNjZCQkZKSk5OUlZaXmJqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/"></audio>
+
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --success: #4caf50;
+            --danger: #d32f2f;
+            --gray: #9e9e9e;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        body {
+            font-family:'Segoe UI',
+            sans-serif;margin:0;
+            padding:0;
+            padding-top:50px;
+            padding-bottom:60px;
+            background:#f0f2f5;
+        }
+        header {background:#1a73e8;color:#fff;padding:10px 15px;text-align:center;position:fixed;top:0;width:100%;z-index:1000;box-shadow:0 2px 4px rgba(0,0,0,.1);}
+        header h1 {font-size:1.5rem;margin:0;}
+        
+        nav {background:#4285f4;padding:8px;display:flex;overflow-x:auto;position:fixed;bottom:0;width:100%;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.3);}
+        nav button {margin:4px;padding:8px 16px;background:#5e9ff3;color:#fff;border:none;cursor:pointer;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+        nav button.active {background:var(--primary);font-weight:bold;}
+        
+        .tab {display:none;padding:20px;background:#fff;margin:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+        .tab.active {display:block;}
+
+        .tab-btn {
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #0d47a1 !important;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .form-group {margin-bottom:12px;}
+        .form-group label {display:block;margin-bottom:4px;font-weight:bold;color:var(--dark);}
+        .form-group input,.form-group select {width:100%;padding:8px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;}
+        .btn {padding:8px 16px;margin:2px;cursor:pointer;border:none;border-radius:4px;font-weight:bold;font-size:14px;}
+        .btn-primary {background:var(--primary);color:#fff;}
+        .btn-success {background:var(--success);color:#fff;}
+        .btn-danger {background:var(--danger);color:#fff;}
+        .btn-secondary {background:var(--gray);color:#fff;}
+        .btn-small {font-size:12px;padding:4px 8px;}
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            display:table;
+            width:100%;
+            border-collapse:collapse;
+            margin-top:10px;
+            overflow-x:auto;
+            table-layout: fixed; 
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            word-break: break-word; 
+        }
+        th {background:#e3f2fd;font-weight:bold;}
+        tr:hover {background:#f5f5f5;cursor:pointer;}
+        tr.selected {background:#bbdefb !important;}
+        #inventoryTable tr:hover {background:#f5f5f5;}
+        #inventoryTable tr.selected {background:#bbdefb !important;}
+        
+        /* Contêiner da Câmera para posicionamento do overlay */
+        #videoContainer {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 15px auto; /* Centraliza */
+            display: none;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #videoContainer.active {
+            display: block;
+        }
+
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        /* Estilos do Frame de Enquadramento */
+        .scan-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .scan-frame::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px dashed rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 0 100vh rgba(0, 0, 0, 0.5); /* Efeito de máscara */
+        }
+
+        /* Layout para Código de Barras (Retangular) */
+        .barcode-frame::before {
+            width: 90%;
+            height: 40%;
+            border-radius: 4px;
+        }
+
+        /* Layout para QR Code (Quadrado) */
+        .qrcode-frame::before {
+            width: 70%;
+            height: 70%;
+            border-radius: 4px;
+        }
+
+        .panel {border:1px solid #ddd;border-radius:8px;margin-bottom:15px;overflow:hidden;}
+        .panel-header {background:#e3f2fd;padding:12px;font-weight:bold;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;}
+        .panel-header::after {content:'chevron_down';font-family:'Material Icons';font-size:18px;}
+        .panel-header.collapsed::after {content:'chevron_right';}
+        .panel-content {padding:15px;display:block;}
+        .panel-content.collapsed {display:none;}
+        .filter-input {width:100%;padding:6px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;}
+        .filter-checkboxes {max-height:200px;overflow-y:auto;border:1px solid #eee;padding:5px;background:#fff;}
+        .filter-checkboxes label {display:block;margin:3px 0;font-size:13px;}
+        .hidden {display:none;}
+        .item {padding:8px;background:#f9f9f9;margin:5px 0;border-radius:4px;cursor:pointer;}
+        .item.selected {background:#bbdefb;}
+        .toast {position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:8px 16px;background:#333;color:#fff;border-radius:4px;opacity:0;transition:opacity .3s;}
+        .toast.show {opacity:1;}
+        .obj-img {max-height:2.2rem;vertical-align:middle;margin-right:6px;}
+        .preview-img {max-height:80px;margin-top:6px;border:1px solid #ddd;border-radius:4px;}
+
+        /* Modal de seleção de imagem */
+        .image-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 2000; display: none; justify-content: center; align-items: center;
+        }
+        .image-modal.active { display: flex; }
+        .image-grid {
+            background: white; padding: 20px; border-radius: 12px; max-width: 90%; max-height: 80vh; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+        }
+        .image-item {
+            text-align: center; cursor: pointer; padding: 8px; border: 2px solid transparent; border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .image-item:hover { border-color: var(--primary); background: #e3f2fd; }
+        .image-item img { width: 100%; height: auto; max-height: 80px; object-fit: contain; }
+        .image-item.selected { border-color: var(--success); background: #e8f5e9; }
+
+        /* FAIXA HORIZONTAL DE OBJETOS */
+        .objeto-cards {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+            max-width: 100%;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .objeto-cards::-webkit-scrollbar { height: 6px; }
+        .objeto-cards::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        .card-objeto {
+            min-width: 100px; max-width: 100px; background: white; border: 1px solid #ddd;
+            border-radius: 8px; padding: 10px; text-align: center; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+        .card-objeto:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        /* CORRIGIDO: Estilo de seleção para card-objeto no inventário */
+        .card-objeto.selected { border-color: var(--primary); background: #bbdefb; box-shadow: 0 0 5px var(--primary); }
+
+        .card-objeto img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 6px; }
+        .card-objeto .text-xs { font-size: 11px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+
+        /* CARDS RESPONSIVOS (mobile) */
+        .cards { display: none; }
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        /* CORRIGIDO: Estilo de seleção para card padrão (usado em Salas, Objetos e Inventário) */
+        .card.selected { border-color: var(--primary); background: #e3f2fd; box-shadow: 0 0 5px var(--primary); }
+        .card .label { font-weight: bold; color: #555; font-size: 0.85rem; }
+        .card .value { margin-left: 4px; font-size: 0.95rem; word-break: break-word; }
+
+        /* IMAGEM À ESQUERDA DO CARD (3 LINHAS) */
+        .card .flex {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .card .flex img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        .card .flex > div {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Regras padrão de responsividade */
+        @media (max-width: 768px) {
+            #tabelaUnidades { display: none; }
+            #cardsUnidades { display: block; }
+            #tabelaSalas { display: none; }
+            #cardsSalas { display: block; }
+            #tabelaObjetos { display: none; }
+            #cardsObjetos { display: block; }
+            #inventoryTable { display: none; }
+            #cardsInventario { display: block; }
+            .tab { padding: 15px; }
+        }
+
+        /* Estilo de Grid para Cards do Relatório */
+        #cardsRelatorio {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 colunas no desktop */
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            #cardsRelatorio {
+                grid-template-columns: repeat(2, 1fr); /* 2 colunas no mobile */
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+<header><h1>Controle de Ativo Fixo</h1></header>
+
+<nav class="bg-blue-500 p-2 flex overflow-x-auto">
+    <button class="tab-btn" data-tab="tabUnidade">Unidades</button>
+    <button class="tab-btn" data-tab="tabLocais">Salas</button>
+    <button class="tab-btn" data-tab="tabObjetos">Objetos</button>
+    <button class="tab-btn" data-tab="tabInventario">Registrar Inventário</button>
+    <button class="tab-btn" data-tab="tabRelatorio">Relatório</button>
+</nav>
+
+<!-- ====================== UNIDADES ====================== -->
+<div id="tabUnidade" class="tab">
+    <h2>Cadastro de Unidades</h2>
+    <div class="form-group"><label>Nome da Unidade</label><input type="text" id="unidadeNome"></div>
+    <div class="form-group"><label>E-mail</label><input type="email" id="unidadeEmail"></div>
+    <div class="form-group"><label>ID da Planilha (opcional)</label><input type="text" id="unidadeSheetId"></div>
+    <button class="btn btn-primary" id="addUnidade">Adicionar Unidade</button>
+    <button class="btn btn-danger hidden" id="removeUnidade">Remover Selecionada</button>
+    <div class="table-wrapper">
+        <table id="tabelaUnidades"><thead><tr><th>Nome</th><th>E-mail</th><th>Planilha</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="cards" id="cardsUnidades"></div>
+</div>
+
+<!-- ====================== SALAS ====================== -->
+<div id="tabLocais" class="tab">
+    <h2>Cadastro de Salas</h2>
+    <div class="form-group">
+        <label>Unidade</label>
+        <select id="unidadeSelectLocais"><option value="">Selecione...</option></select>
+    </div>
+    <div class="form-group"><label>ID da Sala</label><input type="text" id="salaId"></div>
+    <div class="form-group"><label>Descrição</label><input type="text" id="salaDesc"></div>
+    <button class="btn btn-primary" id="addSala">Adicionar Sala</button>
+    <button class="btn btn-danger hidden" id="removeSala">Remover Selecionada</button>
+    <div class="table-wrapper">
+        <table id="tabelaSalas"><thead><tr><th>Unidade</th><th>ID</th><th>Descrição</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="cards" id="cardsSalas"></div>
+</div>
+
+<!-- ====================== OBJETOS ====================== -->
+<div id="tabObjetos" class="tab">
+    <h2>Cadastro de Tipos de Objetos</h2>
+    <div class="form-group"><label>ID do Objeto</label><input type="text" id="objId"></div>
+    <div class="form-group"><label>Descrição</label><input type="text" id="objDesc"></div>
+    <div class="form-group"><label>Complemento</label><input type="text" id="objComp"></div>
+
+    <div class="form-group">
+        <label>Imagem</label>
+        <button type="button" id="btnSelectImage" class="btn btn-secondary">Selecionar Imagem</button>
+        <div id="selectedImagePreview" style="margin-top:8px; display:none;">
+            <img id="objImgPreview" class="preview-img" alt="Pré-visualização">
+            <button type="button" id="btnClearImage" class="btn btn-danger btn-small">Remover</button>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" id="addObjeto">Adicionar Objeto</button>
+    <button class="btn btn-danger hidden" id="removeObjeto">Remover Selecionado</button>
+    <div class="table-wrapper">
+        <table id="tabelaObjetos"><thead><tr><th>ID</th><th>Descrição</th><th>Complemento</th><th>Imagem</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="cards" id="cardsObjetos"></div>
+</div>
+
+<!-- Modal de seleção de imagem -->
+<div id="imageModal" class="image-modal">
+    <div class="image-grid" id="imageGrid"></div>
+</div>
+
+<!-- ====================== REGISTRAR INVENTÁRIO ====================== -->
+<div id="tabInventario" class="tab">
+    <h2>Registrar Inventário</h2>
+
+    <div class="panel">
+        <div class="panel-header" id="panelUnidadeLocalHeader">Unidade - Local</div>
+        <div class="panel-content" id="panelUnidadeLocal">
+            <div class="form-group">
+                <label>Unidade</label>
+                <select id="selectUnidadeInv"><option value="">Selecione...</option></select>
+            </div>
+            <div class="form-group">
+                <label>Sala</label>
+                <select id="selectSala"><option value="">Selecione...</option></select>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header" id="panelCodigoHeader">Digitar Código</div>
+        <div class="panel-content collapsed" id="panelCodigo">
+            <div class="form-group">
+                <label>Tipo de Objeto</label>
+                <div id="objetoContainer">
+                    <button type="button" id="btnSelectObjeto" class="btn btn-secondary w-full">Selecionar Objeto</button>
+                    <div id="selectedObjetoPreview" class="hidden mt-2 p-2 bg-blue-50 rounded flex items-center">
+                        <img id="selectedObjImg" class="obj-img" src="" alt="">
+                        <span id="selectedObjText" class="ml-2 font-medium"></span>
+                        <button type="button" id="btnClearObjeto" class="ml-auto btn btn-danger btn-small">×</button>
+                    </div>
+                </div>
+                <div id="objetoCards" class="objeto-cards hidden"></div>
+            </div>
+            <div class="form-group">
+                <label>Código</label>
+                <input type="text" id="barcodeInput" placeholder="Digite ou escaneie...">
+            </div>
+            <button class="btn btn-primary" id="addItemBtn">Adicionar Item</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header" id="panelScannerHeader">Escanear</div>
+        <div class="panel-content collapsed" id="panelScanner">
+            <table class="ctrl">
+                <tr>
+                    <td>Código de Barras</td>
+                    <td><input type="radio" name="codeType" value="BARCODE" checked></td>
+                    <td>QR Code</td>
+                    <td><input type="radio" name="codeType" value="QRCODE"></td>
+                    <td>Modo Contínuo</td>
+                    <td><input type="checkbox" id="modoContinuo"></td>
+                </tr>
+            </table>
+            <div style="margin-top:10px;">
+                <table class="ctrl">
+                <tr>
+                    <td><button class="btn btn-primary" id="scanBtn">Ler Código</button></td>
+                </tr>
+                </table>
+            </div>
+            <!-- Contêiner para a câmera e o frame de enquadramento -->
+            <div id="videoContainer">
+                <video id="video" autoplay playsinline></video>
+                <div id="scanFrame" class="scan-frame barcode-frame"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header" id="panelItensHeader">Itens Registrados</div>
+        <div class="panel-content collapsed" id="panelItens">
+            <!-- Removido o botão de Adicionar duplicado aqui -->
+            <button class="btn btn-danger" id="removeItemBtn" disabled>Remover</button>
+            <button class="btn btn-secondary" id="clearSalaBtn">Limpar Sala</button>
+
+            <h3>Itens registrados</h3>
+            <table id="inventoryTable" style="margin-top:10px;" class="table-wrapper">
+                <thead>
+                    <tr>
+                        <th>IMG</th>
+                        <th>OBJETO</th>
+                        <th>CÓDIGO</th>
+                        <th>QTD</th>
+                        <th>DATA/HORA</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="cards" id="cardsInventario"></div>
+        </div>
+    </div>
+
+    <hr>
+    <button class="btn btn-success" id="downloadXlsxBtn">Gerar Relatório XLSX</button>
+</div>
+
+<!-- ====================== RELATÓRIO ====================== -->
+<div id="tabRelatorio" class="tab">
+    <h2>Relatório de Inventário</h2>
+    
+    <div class="flex space-x-2 mb-4">
+        <button class="btn btn-secondary flex items-center" id="btnLayoutTable">
+            <span class="material-icons text-lg mr-1">view_list</span> Tabela
+        </button>
+        <button class="btn btn-secondary flex items-center" id="btnLayoutCards">
+            <span class="material-icons text-lg mr-1">grid_view</span> Cards
+        </button>
+    </div>
+
+    <button class="btn btn-success" id="downloadXlsxRelatorioBtn">Gerar Relatório XLSX</button>
+    <div class="table-wrapper" id="relatorioTableWrapper">
+        <table id="tabelaRelatorio">
+            <thead>
+                <tr>
+                    <th data-col="imagem">IMG</th>
+                    <th data-col="unidade">UNIDADE <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="sala">SALA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="objeto">OBJETO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="codigo">CÓDIGO <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="qtd">QTD <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                    <th data-col="datahora">DATA/HORA <br><input class="filter-input" type="text" placeholder="Filtrar..."></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div id="cardsRelatorio" style="display:none;"></div> 
+</div>
+
+<script>
+/* ==============================================================
+   DADOS GLOBAIS
+   ============================================================== */
+const codeReader = new ZXing.BrowserMultiFormatReader();
+const beepSound = document.getElementById('beepSound');
+let scanning = false;
+
+// Variáveis de estado para o item selecionado (usando índice no array)
+let selectedItemIndex = -1;
+let selectedUnidadeIndex = -1;
+let selectedSalaIndex = -1; 
+let selectedObjetoIndex = -1;
+
+let currentCodeHint = 'BARCODE';
+let selectedImage = null;
+
+// Novo estado para controlar o layout do relatório
+let reportForcedLayout = null; // null (responsivo), 'table', ou 'cards'
+
+
+const IMAGES = [
+    "armario2p.png","armario4p.png","armariometal.png","arquivogaveteiro.png",
+    "cadeira.png","carteira.png","computador.png","estantelivros.png",
+    "impressora3d.png","impressora.png","lousadigital.png","mesaprofessor.png",
+    "mesarefeitorio.png","mesasecretaria.png","mesasom.png","notebook.png",
+    "placardigital.png","planetario.png","projetor.png","quadrobranco.png",
+    "radio.png","televisao.png"
+];
+
+let data = {
+    unidades: [],
+    salas: [],
+    objetos: [],
+    inventario: []
+};
+
+/* ==============================================================
+   PERSISTÊNCIA
+   ============================================================== */
+function loadData() {
+    const stored = localStorage.getItem('ativoFixoDataV3');
+    const storedLayout = localStorage.getItem('reportForcedLayout');
+    if (stored) data = JSON.parse(stored);
+    if (storedLayout) reportForcedLayout = storedLayout;
+    else saveData();
+}
+function saveData() {
+    localStorage.setItem('ativoFixoDataV3', JSON.stringify(data));
+}
+
+/* ==============================================================
+   NAVEGAÇÃO
+   ============================================================== */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const target = document.getElementById(btn.dataset.tab);
+        target.classList.add('active');
+        btn.classList.add('active');
+        setTimeout(() => {
+            if (btn.dataset.tab === 'tabUnidade') renderUnidades();
+            if (btn.dataset.tab === 'tabLocais') { renderUnidadeSelectLocais(); renderSalas(); }
+            if (btn.dataset.tab === 'tabObjetos') renderObjetos();
+            if (btn.dataset.tab === 'tabInventario') { initInventarioTab(); }
+            if (btn.dataset.tab === 'tabRelatorio') { renderRelatorio(); applyReportLayout(); } // Aplica layout
+        }, 50);
+    });
+});
+
+setTimeout(() => {
+    const firstBtn = document.querySelector('.tab-btn');
+    if (firstBtn) firstBtn.click();
+}, 100);
+
+/* ==============================================================
+   PAINÉIS DOBRÁVEIS
+   ============================================================== */
+function setupPanel(headerId, contentId) {
+    const header = document.getElementById(headerId);
+    const content = document.getElementById(contentId);
+    header.addEventListener('click', () => {
+        const isCollapsed = content.classList.toggle('collapsed');
+        header.classList.toggle('collapsed', isCollapsed);
+    });
+}
+setupPanel('panelUnidadeLocalHeader', 'panelUnidadeLocal');
+setupPanel('panelCodigoHeader', 'panelCodigo');
+setupPanel('panelScannerHeader', 'panelScanner');
+setupPanel('panelItensHeader', 'panelItens');
+
+/* ==============================================================
+   RENDERIZAÇÃO COM CARDS + TABELA
+   ============================================================== */
+function createCardsContainer(tableSelector, id) {
+    const table = document.querySelector(tableSelector);
+    let container = document.getElementById(id);
+    if (!container) {
+        container = document.createElement('div');
+        container.id = id;
+        container.className = 'cards';
+        table.parentNode.insertBefore(container, table.nextSibling);
+    }
+    return container;
+}
+
+
+/* UNIDADES - CORRIGIDO: Mantida lógica de seleção original, que o usuário reportou como correta. */
+function renderUnidades() {
+    const tbody = document.querySelector('#tabelaUnidades tbody');
+    const cardsContainer = document.getElementById('cardsUnidades');
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
+    
+    // Resetar estado de seleção antes de renderizar
+    selectedUnidadeIndex = -1;
+    document.getElementById('addUnidade').textContent = 'Adicionar Unidade';
+    document.getElementById('removeUnidade').classList.add('hidden');
+
+    data.unidades.forEach((u, i) => {
+        
+        // Função de atualização do formulário
+        const updateUnidadeForm = (item, isSelected) => {
+            document.getElementById('addUnidade').textContent = isSelected ? 'Atualizar Unidade' : 'Adicionar Unidade';
+            document.getElementById('removeUnidade').classList.toggle('hidden', !isSelected);
+            if (isSelected) {
+                document.getElementById('unidadeNome').value = item.nome;
+                document.getElementById('unidadeEmail').value = item.email;
+                document.getElementById('unidadeSheetId').value = item.sheetId || '';
+                selectedUnidadeIndex = i;
+            } else {
+                document.getElementById('unidadeNome').value = '';
+                document.getElementById('unidadeEmail').value = '';
+                document.getElementById('unidadeSheetId').value = '';
+                selectedUnidadeIndex = -1;
+            }
+        };
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u.nome}</td><td>${u.email}</td><td>${u.sheetId || '-'}</td>`;
+        tr.addEventListener('click', () => {
+            const isSelected = tr.classList.contains('selected');
+            document.querySelectorAll('#tabelaUnidades tbody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#cardsUnidades .card').forEach(c => c.classList.remove('selected'));
+            
+            if (!isSelected) {
+                tr.classList.add('selected');
+                updateUnidadeForm(u, true);
+            } else {
+                updateUnidadeForm(null, false);
+            }
+        });
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="label">Nome:</div> <span class="value">${u.nome}</span><br>
+            <div class="label">E-mail:</div> <span class="value">${u.email}</span><br>
+            <div class="label">Planilha:</div> <span class="value">${u.sheetId || '-'}</span>
+        `;
+        card.addEventListener('click', () => {
+            const isSelected = card.classList.contains('selected');
+            document.querySelectorAll('#cardsUnidades .card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('#tabelaUnidades tbody tr').forEach(r => r.classList.remove('selected'));
+
+            if (!isSelected) {
+                card.classList.add('selected');
+                updateUnidadeForm(u, true);
+            } else {
+                updateUnidadeForm(null, false);
+            }
+        });
+        cardsContainer.appendChild(card);
+    });
+}
+
+/* SALAS - CORRIGIDO: Lógica de seleção e população de campos unificada e com toggle. */
+function renderSalas() {
+    const tbody = document.querySelector('#tabelaSalas tbody');
+    const cardsContainer = createCardsContainer('#tabelaSalas', 'cardsSalas');
+    tbody.innerHTML = ''; cardsContainer.innerHTML = '';
+
+    const unidadeIdFilter = document.getElementById('unidadeSelectLocais').value;
+    const salas = unidadeIdFilter ? data.salas.filter(s => s.unidadeId === unidadeIdFilter) : data.salas;
+    
+    // Resetar estado de seleção antes de renderizar
+    selectedSalaIndex = -1;
+    document.getElementById('addSala').textContent = 'Adicionar Sala';
+    document.getElementById('removeSala').classList.add('hidden');
+
+    salas.forEach((s) => {
+        const u = data.unidades.find(un => un.id === s.unidadeId);
+        const indexInGlobalArray = data.salas.indexOf(s); // Índice correto para CRUD
+
+        const updateSalaForm = (item, isSelected) => {
+            document.getElementById('addSala').textContent = isSelected ? 'Atualizar Sala' : 'Adicionar Sala';
+            document.getElementById('removeSala').classList.toggle('hidden', !isSelected);
+            if (isSelected) {
+                document.getElementById('unidadeSelectLocais').value = item.unidadeId;
+                document.getElementById('salaId').value = item.id;
+                document.getElementById('salaDesc').value = item.descricao;
+                selectedSalaIndex = indexInGlobalArray;
+            } else {
+                document.getElementById('unidadeSelectLocais').value = '';
+                document.getElementById('salaId').value = '';
+                document.getElementById('salaDesc').value = '';
+                selectedSalaIndex = -1;
+            }
+        };
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u?.nome || '—'}</td><td>${s.id}</td><td>${s.descricao}</td>`;
+        
+        // Clique na TR (Tabela)
+        tr.onclick = () => {
+            const isSelected = tr.classList.contains('selected');
+            document.querySelectorAll('#tabelaSalas tbody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#cardsSalas .card').forEach(c => c.classList.remove('selected'));
+
+            if (!isSelected) {
+                tr.classList.add('selected');
+                updateSalaForm(s, true);
+            } else {
+                updateSalaForm(null, false);
+            }
+        };
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div><span class="label">Unidade:</span> <span class="value">${u?.nome || '—'}</span></div>
+            <div><span class="label">ID:</span> <span class="value">${s.id}</span></div>
+            <div><span class="label">Descrição:</span> <span class="value">${s.descricao}</span></div>
+        `;
+
+        // Clique no Card (Mobile)
+        card.onclick = () => {
+             const isSelected = card.classList.contains('selected');
+            document.querySelectorAll('#cardsSalas .card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('#tabelaSalas tbody tr').forEach(r => r.classList.remove('selected'));
+
+            if (!isSelected) {
+                card.classList.add('selected');
+                updateSalaForm(s, true);
+            } else {
+                updateSalaForm(null, false);
+            }
+        };
+        cardsContainer.appendChild(card);
+    });
+}
+
+/* OBJETOS - CORRIGIDO: Lógica de seleção e população de campos unificada e com toggle. */
+function renderObjetos() {
+    const tbody = document.querySelector('#tabelaObjetos tbody');
+    const cardsContainer = createCardsContainer('#tabelaObjetos', 'cardsObjetos');
+    tbody.innerHTML = ''; cardsContainer.innerHTML = '';
+
+    // Resetar estado de seleção antes de renderizar
+    selectedObjetoIndex = -1;
+    document.getElementById('addObjeto').textContent = 'Adicionar Objeto';
+    document.getElementById('removeObjeto').classList.add('hidden');
+
+    data.objetos.forEach((o, i) => {
+        const imgHtml = o.imagem ? `<img src="imagens/${o.imagem}" class="obj-img" alt="">` : '';
+        
+        const updateObjetoForm = (item, isSelected) => {
+             document.getElementById('addObjeto').textContent = isSelected ? 'Atualizar Objeto' : 'Adicionar Objeto';
+             document.getElementById('removeObjeto').classList.toggle('hidden', !isSelected);
+
+             if (isSelected) {
+                 selectedObjetoIndex = i;
+                 document.getElementById('objId').value = item.id;
+                 document.getElementById('objDesc').value = item.descricao;
+                 document.getElementById('objComp').value = item.complemento || '';
+                 selectedImage = item.imagem;
+                 if (item.imagem) {
+                     document.getElementById('objImgPreview').src = `imagens/${item.imagem}`;
+                     document.getElementById('selectedImagePreview').style.display = 'block';
+                 } else {
+                     document.getElementById('selectedImagePreview').style.display = 'none';
+                 }
+             } else {
+                 selectedObjetoIndex = -1;
+                 document.getElementById('objId').value = '';
+                 document.getElementById('objDesc').value = '';
+                 document.getElementById('objComp').value = '';
+                 selectedImage = null;
+                 document.getElementById('objImgPreview').src = '';
+                 document.getElementById('selectedImagePreview').style.display = 'none';
+                 // Garantir que a seleção de imagem no modal também seja limpa
+                 document.querySelectorAll('.image-item').forEach(img => img.classList.remove('selected'));
+             }
+        };
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${o.id}</td><td>${o.descricao}</td><td>${o.complemento || ''}</td><td>${imgHtml}</td>`;
+        
+        // Clique na TR (Tabela)
+        tr.onclick = () => {
+             const isSelected = tr.classList.contains('selected');
+             document.querySelectorAll('#tabelaObjetos tbody tr').forEach(r => r.classList.remove('selected'));
+             document.querySelectorAll('#cardsObjetos .card').forEach(c => c.classList.remove('selected'));
+
+             if (!isSelected) {
+                 tr.classList.add('selected');
+                 updateObjetoForm(o, true);
+             } else {
+                 updateObjetoForm(null, false);
+             }
+        };
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="flex">
+                ${o.imagem ? `<img src="imagens/${o.imagem}" alt="">` : ''}
+                <div>
+                    <div><span class="label">ID:</span> <span class="value">${o.id}</span></div>
+                    <div><span class="label">Descrição:</span> <span class="value">${o.descricao}</span></div>
+                    <div><span class="label">Complemento:</span> <span class="value">${o.complemento || '-'}</span></div>
+                </div>
+            </div>
+        `;
+        
+        // Clique no Card (Mobile)
+        card.onclick = () => {
+             const isSelected = card.classList.contains('selected');
+             document.querySelectorAll('#cardsObjetos .card').forEach(c => c.classList.remove('selected'));
+             document.querySelectorAll('#tabelaObjetos tbody tr').forEach(r => r.classList.remove('selected'));
+
+             if (!isSelected) {
+                 card.classList.add('selected');
+                 updateObjetoForm(o, true);
+             } else {
+                 updateObjetoForm(null, false);
+             }
+        };
+        cardsContainer.appendChild(card);
+    });
+}
+
+/* INVENTÁRIO LISTA - CORRIGIDO: Lógica de seleção com toggle e população do campo Código. */
+function renderInventoryList() {
+    const tbody = document.querySelector('#inventoryTable tbody');
+    const cardsContainer = createCardsContainer('#inventoryTable', 'cardsInventario');
+    tbody.innerHTML = ''; cardsContainer.innerHTML = '';
+
+    const unidadeId = document.getElementById('selectUnidadeInv').value;
+    const salaId = document.getElementById('selectSala').value;
+    if (!unidadeId || !salaId) return;
+
+    const itens = data.inventario.filter(i => i.unidadeId === unidadeId && i.salaId === salaId);
+    
+    // Resetar o índice e botão de remoção
+    selectedItemIndex = -1;
+    document.getElementById('removeItemBtn').disabled = true;
+
+    if (itens.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;"><i>Nenhum item registrado.</i></td></tr>';
+        cardsContainer.innerHTML = '<div class="text-center text-gray-500 py-4"><i>Nenhum item registrado.</i></div>';
+        return;
+    }
+
+    itens.forEach((item) => {
+        const obj = data.objetos.find(o => o.id === item.objetoId);
+        const imgHtml = obj?.imagem ? `<img src="imagens/${obj.imagem}" class="obj-img" alt="">` : '';
+        
+        const handleInventorySelection = (element, isSelected) => {
+            // Remove a seleção de TODAS as linhas e cards antes de aplicar/remover
+            document.querySelectorAll('#inventoryTable tbody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#cardsInventario .card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('removeItemBtn').disabled = true;
+            document.getElementById('barcodeInput').value = ''; // Limpa sempre antes de popular
+
+            if (isSelected) {
+                element.classList.add('selected');
+                selectedItemIndex = data.inventario.indexOf(item); // Define o item selecionado
+                document.getElementById('barcodeInput').value = item.codigoBarra; 
+                document.getElementById('removeItemBtn').disabled = false;
+            } else {
+                selectedItemIndex = -1;
+            }
+        };
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${imgHtml}</td><td>${obj?.descricao || item.objetoId}</td><td>${item.codigoBarra}</td><td>${item.contador}</td><td>${item.dataHora}</td>`;
+        
+        // Clique na TR (Tabela)
+        tr.onclick = () => {
+            const isSelected = tr.classList.contains('selected');
+            handleInventorySelection(tr, !isSelected); // Aplica a lógica de toggle
+        };
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="flex">
+                ${obj?.imagem ? `<img src="imagens/${obj.imagem}" alt="">` : ''}
+                <div>
+                    <div><span class="label">Objeto:</span> <span class="value">${obj?.descricao || item.objetoId}</span></div>
+                    <div><span class="label">Código:</span> <span class="value">${item.codigoBarra}</span></div>
+                    <div><span class="label">QTD:</span> <span class="value">${item.contador}</span> | <span class="label">Data:</span> <span class="value">${item.dataHora}</span></div>
+                </div>
+            </div>
+        `;
+
+        // Clique no Card (Mobile)
+        card.onclick = () => {
+            const isSelected = card.classList.contains('selected');
+            handleInventorySelection(card, !isSelected); // Aplica a lógica de toggle
+        };
+        cardsContainer.appendChild(card);
+    });
+}
+
+/* ==============================================================
+   UNIDADES - CRUD
+   ============================================================== */
+document.getElementById('addUnidade').addEventListener('click', () => {
+    const nome = document.getElementById('unidadeNome').value.trim();
+    const email = document.getElementById('unidadeEmail').value.trim();
+    const sheetId = document.getElementById('unidadeSheetId').value.trim();
+
+    if (!nome) return alert('Nome é obrigatório');
+    
+    // CORRIGIDO: usa selectedUnidadeIndex para CRUD
+    if (selectedUnidadeIndex !== -1) {
+        data.unidades[selectedUnidadeIndex].nome = nome;
+        data.unidades[selectedUnidadeIndex].email = email;
+        data.unidades[selectedUnidadeIndex].sheetId = sheetId;
+    } else {
+        const id = 'u' + Date.now();
+        data.unidades.push({id, nome, email, sheetId});
+    }
+    document.getElementById('unidadeNome').value = '';
+    document.getElementById('unidadeEmail').value = '';
+    document.getElementById('unidadeSheetId').value = '';
+    
+    saveData(); 
+    renderUnidades();
+});
+
+document.getElementById('removeUnidade').addEventListener('click', () => {
+    // CORRIGIDO: usa selectedUnidadeIndex para CRUD
+    if (selectedUnidadeIndex !== -1 && confirm('Remover unidade?')) {
+        data.unidades.splice(selectedUnidadeIndex, 1);
+        selectedUnidadeIndex = -1;
+        document.getElementById('removeUnidade').classList.add('hidden');
+        saveData(); 
+        renderUnidades();
+    }
+});
+
+/* ==============================================================
+   SALAS - CRUD
+   ============================================================== */
+function renderUnidadeSelectLocais() {
+    const select = document.getElementById('unidadeSelectLocais');
+    // Salva o valor atualmente selecionado para persistir após a renderização
+    const selectedValue = select.value; 
+    select.innerHTML = '<option value="">Selecione...</option>';
+    data.unidades.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id; opt.textContent = u.nome;
+        select.appendChild(opt);
+    });
+    // Restaura o valor selecionado
+    if (selectedValue) select.value = selectedValue;
+}
+
+document.getElementById('addSala').addEventListener('click', () => {
+    const unidadeId = document.getElementById('unidadeSelectLocais').value;
+    const id = document.getElementById('salaId').value.trim();
+    const desc = document.getElementById('salaDesc').value.trim();
+    if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
+    
+    // CORRIGIDO: usa selectedSalaIndex para CRUD
+    if (selectedSalaIndex !== -1) {
+        data.salas[selectedSalaIndex].id = id;
+        data.salas[selectedSalaIndex].descricao = desc;
+        // Não atualiza unidadeId para evitar erro, a menos que o ID seja diferente.
+        // data.salas[selectedSalaIndex].unidadeId = unidadeId; 
+    } else {
+        data.salas.push({id, unidadeId, descricao: desc});
+    }
+    document.getElementById('salaId').value = '';
+    document.getElementById('salaDesc').value = '';
+    saveData(); 
+    renderSalas();
+});
+
+document.getElementById('removeSala').addEventListener('click', () => {
+    // CORRIGIDO: usa selectedSalaIndex para CRUD
+    if (selectedSalaIndex !== -1 && confirm('Remover sala?')) {
+        data.salas.splice(selectedSalaIndex, 1);
+        selectedSalaIndex = -1;
+        document.getElementById('removeSala').classList.add('hidden');
+        saveData(); 
+        renderSalas();
+    }
+});
+
+/* ==============================================================
+   OBJETOS – com grid de imagens
+   ============================================================== */
+function initImageModal() {
+    const modal = document.getElementById('imageModal');
+    const grid = document.getElementById('imageGrid');
+    const btn = document.getElementById('btnSelectImage');
+    const preview = document.getElementById('objImgPreview');
+    const container = document.getElementById('selectedImagePreview');
+    const clearBtn = document.getElementById('btnClearImage');
+
+    grid.innerHTML = IMAGES.map(img => `
+        <div class="image-item" data-img="${img}">
+            <img src="imagens/${img}" alt="${img}">
+            <div style="font-size:12px; margin-top:4px;">${img.replace('.png','').replace(/([A-Z])/g,' $1')}</div>
+        </div>
+    `).join('');
+
+    grid.querySelectorAll('.image-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            selectedImage = item.dataset.img;
+            preview.src = `imagens/${selectedImage}`;
+            container.style.display = 'block';
+            modal.classList.remove('active');
+        });
+    });
+
+    btn.addEventListener('click', () => {
+        // Marca o item no grid se já houver uma imagem selecionada
+        document.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+        if (selectedImage) {
+            const currentSelected = grid.querySelector(`[data-img="${selectedImage}"]`);
+            if (currentSelected) currentSelected.classList.add('selected');
+        }
+        modal.classList.add('active');
+    });
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+    clearBtn.addEventListener('click', () => {
+        selectedImage = null;
+        container.style.display = 'none';
+        document.querySelectorAll('.image-item').forEach(i => i.classList.remove('selected'));
+    });
+}
+
+document.getElementById('addObjeto').addEventListener('click', () => {
+    const id = document.getElementById('objId').value.trim();
+    const desc = document.getElementById('objDesc').value.trim();
+    const comp = document.getElementById('objComp').value.trim();
+    if (!id || !desc) return alert('Preencha ID e descrição');
+    
+    // CORRIGIDO: usa selectedObjetoIndex para CRUD
+    if (selectedObjetoIndex !== -1) {
+        data.objetos[selectedObjetoIndex].id = id;
+        data.objetos[selectedObjetoIndex].descricao = desc;
+        data.objetos[selectedObjetoIndex].complemento = comp;
+        data.objetos[selectedObjetoIndex].imagem = selectedImage;
+    } else {
+        data.objetos.push({id, descricao: desc, complemento: comp, imagem: selectedImage});
+    }
+
+    document.getElementById('objId').value = '';
+    document.getElementById('objDesc').value = '';
+    document.getElementById('objComp').value = '';
+    selectedImage = null;
+    document.getElementById('selectedImagePreview').style.display = 'none';
+    
+    saveData(); 
+    renderObjetos();
+});
+
+document.getElementById('removeObjeto').addEventListener('click', () => {
+    // CORRIGIDO: usa selectedObjetoIndex para CRUD
+    if (selectedObjetoIndex !== -1 && confirm('Remover objeto?')) {
+        data.objetos.splice(selectedObjetoIndex, 1);
+        selectedObjetoIndex = -1;
+        document.getElementById('removeObjeto').classList.add('hidden');
+        saveData(); 
+        renderObjetos();
+    }
+});
+
+/* ==============================================================
+   INVENTÁRIO – com cards de objetos
+   ============================================================== */
+function initObjetoCards() {
+    const btn = document.getElementById('btnSelectObjeto');
+    const cardsContainer = document.getElementById('objetoCards');
+    const preview = document.getElementById('selectedObjetoPreview');
+    const img = document.getElementById('selectedObjImg');
+    const text = document.getElementById('selectedObjText');
+    const clear = document.getElementById('btnClearObjeto');
+
+    function renderCards() {
+        cardsContainer.innerHTML = data.objetos.map(o => {
+            const imgHtml = o.imagem ? `<img src="imagens/${o.imagem}" alt="">` : '<div class="w-12 h-12 bg-gray-200 border rounded mx-auto"></div>';
+            const isSelected = selectedObjetoIndex !== -1 && data.objetos[selectedObjetoIndex].id === o.id ? 'selected' : '';
+            return `
+                <div class="card-objeto ${isSelected}" data-id="${o.id}">
+                    ${imgHtml}
+                    <div class="text-xs font-medium mt-1">${o.descricao}</div>
+                </div>
+            `;
+        }).join('');
+
+        cardsContainer.querySelectorAll('.card-objeto').forEach(card => card.replaceWith(card.cloneNode(true)));
+        cardsContainer.querySelectorAll('.card-objeto').forEach(card => {
+            card.addEventListener('click', () => {
+                const clickedObjetoId = card.dataset.id;
+                const clickedObjetoIndex = data.objetos.findIndex(o => o.id === clickedObjetoId);
+
+                // Lógica de Toggle
+                if (selectedObjetoIndex === clickedObjetoIndex) {
+                    // Desseleciona
+                    selectedObjetoIndex = -1;
+                    preview.classList.add('hidden');
+                    card.classList.remove('selected');
+                } else {
+                    // Seleciona
+                    selectedObjetoIndex = clickedObjetoIndex;
+                    const obj = data.objetos.find(o => o.id === clickedObjetoId);
+                    img.src = obj.imagem ? `imagens/${obj.imagem}` : '';
+                    img.style.display = obj.imagem ? 'block' : 'none';
+                    text.textContent = obj.descricao;
+                    preview.classList.remove('hidden');
+                    
+                    // Remove a seleção dos outros cards-objeto
+                    cardsContainer.querySelectorAll('.card-objeto').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                }
+                cardsContainer.classList.add('hidden');
+            });
+        });
+
+        if (selectedObjetoIndex !== -1) {
+            const selectedCard = cardsContainer.querySelector(`[data-id="${data.objetos[selectedObjetoIndex].id}"]`);
+            if (selectedCard) selectedCard.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+    }
+
+    btn.addEventListener('click', () => {
+        renderCards();
+        cardsContainer.classList.toggle('hidden');
+    });
+
+    clear.addEventListener('click', () => {
+        selectedObjetoIndex = -1;
+        preview.classList.add('hidden');
+        cardsContainer.classList.add('hidden');
+        // Limpa seleção visual
+        cardsContainer.querySelectorAll('.card-objeto').forEach(c => c.classList.remove('selected'));
+    });
+
+    window.renderObjetoCards = renderCards;
+}
+
+function initInventarioTab() {
+    const selUnidade = document.getElementById('selectUnidadeInv');
+    const selSala = document.getElementById('selectSala');
+
+    selUnidade.innerHTML = '<option value="">Selecione...</option>';
+    data.unidades.forEach(u => {
+        const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.nome; selUnidade.appendChild(opt);
+    });
+
+    selUnidade.addEventListener('change', () => {
+        const unidadeId = selUnidade.value;
+        selSala.innerHTML = '<option value="">Selecione...</option>';
+        if (unidadeId) {
+            data.salas.filter(s => s.unidadeId === unidadeId).forEach(s => {
+                const opt = document.createElement('option'); opt.value = s.id; opt.textContent = s.descricao; selSala.appendChild(opt);
+            });
+        }
+        updateUnidadeLocalTitle();
+        renderInventoryList();
+    });
+
+    selSala.addEventListener('change', () => {
+        updateUnidadeLocalTitle();
+        renderInventoryList();
+    });
+
+    updateUnidadeLocalTitle();
+    renderInventoryList();
+    initObjetoCards(); // Garante que os cards de objeto sejam inicializados
+}
+
+function updateUnidadeLocalTitle() {
+    const u = document.getElementById('selectUnidadeInv').selectedOptions[0]?.textContent || 'Unidade';
+    const s = document.getElementById('selectSala').selectedOptions[0]?.textContent || 'Local';
+    document.getElementById('panelUnidadeLocalHeader').textContent = `${u} - ${s}`;
+}
+
+/* ==============================================================
+   SCANNER
+   ============================================================== */
+document.getElementById('scanBtn').addEventListener('click', () => {
+    if (scanning) { stopScanner(); return; }
+    startScanner();
+});
+
+// Adiciona listener para trocar o frame ao mudar o tipo de código
+document.querySelectorAll('input[name="codeType"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        currentCodeHint = e.target.value;
+        const scanFrame = document.getElementById('scanFrame');
+        if (currentCodeHint === 'BARCODE') {
+            scanFrame.classList.remove('qrcode-frame');
+            scanFrame.classList.add('barcode-frame');
+        } else {
+            scanFrame.classList.remove('barcode-frame');
+            scanFrame.classList.add('qrcode-frame');
+        }
+        // Reinicia o scanner se já estiver ativo para aplicar o novo hint/config
+        if(scanning) { stopScanner(); startScanner(); }
+    });
+});
+
+
+function startScanner() {
+    scanning = true;
+    const videoContainer = document.getElementById('videoContainer');
+    const video = document.getElementById('video');
+    const scanFrame = document.getElementById('scanFrame');
+    
+    // Configura o contêiner da câmera
+    videoContainer.classList.add('active');
+    
+    // Atualiza a classe do frame
+    scanFrame.className = 'scan-frame ' + (currentCodeHint === 'BARCODE' ? 'barcode-frame' : 'qrcode-frame');
+
+    document.getElementById('panelScanner').classList.remove('collapsed');
+    document.getElementById('panelScannerHeader').classList.remove('collapsed');
+
+    const hints = new Map();
+    if (currentCodeHint === 'BARCODE') {
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.EAN_13]);
+    } else {
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+    }
+
+    // Configurações de restrição da câmera (para tentar desligar autofoco)
+    const constraints = {
+        video: {
+            facingMode: 'environment', // Preferir a câmera traseira
+            advanced: [
+                { focusMode: 'manual' }, // Tentar desligar autofoco
+                { focusMode: 'fixed' }, // Outra tentativa de foco fixo
+                { focusMode: 'single-shot' } // Outra tentativa
+            ]
+        }
+    };
+
+    codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
+        if (result) {
+            beepSound.play();
+            document.getElementById('barcodeInput').value = result.getText();
+            
+            if (document.getElementById('modoContinuo').checked) {
+                addInventoryItem();
+            } else {
+                stopScanner();
+                // Se não está em modo contínuo, adiciona o item após parar o scanner
+                addInventoryItem(); 
+            }
+        }
+    }, hints, constraints); // Passa constraints para o decodeFromVideoDevice
+
+    document.getElementById('scanBtn').textContent = 'Parar Leitura';
+}
+
+function stopScanner() {
+    codeReader.reset();
+    scanning = false;
+    document.getElementById('videoContainer').classList.remove('active');
+    
+    if (!document.getElementById('modoContinuo').checked) {
+        document.getElementById('panelScanner').classList.add('collapsed');
+        document.getElementById('panelScannerHeader').classList.add('collapsed');
+    }
+
+    document.getElementById('scanBtn').textContent = 'Ler Código';
+}
+
+/* ==============================================================
+   ADICIONAR ITEM
+   ============================================================== */
+// Removido o botão de Adicionar duplicado no painel Scanner
+document.getElementById('addItemBtn').addEventListener('click', addInventoryItem); 
+document.getElementById('barcodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') addInventoryItem(); });
+
+function addInventoryItem() {
+    const unidadeId = document.getElementById('selectUnidadeInv').value;
+    const salaId = document.getElementById('selectSala').value;
+    
+    // CORRIGIDO: Usa selectedObjetoIndex do array global 'data.objetos'
+    if (selectedObjetoIndex === -1 || !data.objetos[selectedObjetoIndex]) return alert('Selecione um Tipo de Objeto');
+    const objId = data.objetos[selectedObjetoIndex].id;
+    
+    const codigo = document.getElementById('barcodeInput').value.trim();
+
+    // Verificação de campos de Unidade e Sala
+    if (!unidadeId || !salaId) return alert('Selecione a Unidade e a Sala antes de registrar o item.');
+    if (!codigo) return alert('O campo Código não pode estar vazio.');
+
+    const existente = data.inventario.find(i => i.unidadeId === unidadeId && i.salaId === salaId && i.objetoId === objId && i.codigoBarra === codigo);
+    if (existente) {
+        existente.contador++;
+    } else {
+        const now = new Date().toLocaleString('pt-BR'); // Formato de data/hora mais amigável
+        data.inventario.push({unidadeId, salaId, objetoId: objId, codigoBarra: codigo, contador: 1, dataHora: now});
+    }
+
+    saveData();
+    renderInventoryList();
+    document.getElementById('barcodeInput').value = '';
+    
+    // Desseleciona o objeto após adicionar, se não estiver em modo contínuo
+    if (!document.getElementById('modoContinuo').checked) {
+        selectedObjetoIndex = -1;
+        document.getElementById('selectedObjetoPreview').classList.add('hidden');
+    }
+}
+
+document.getElementById('removeItemBtn').addEventListener('click', () => {
+    // CORRIGIDO: usa selectedItemIndex para CRUD
+    if (selectedItemIndex !== -1) {
+        const item = data.inventario[selectedItemIndex];
+        if (item.contador > 1 && !confirm(`O contador atual é ${item.contador}. Deseja remover 1 unidade ou o item completamente? (Clique em OK para remover 1 unidade, CANCELAR para remover o item completamente)`)) {
+             // Se cancelou a remoção de 1 unidade, remove o item completamente
+             data.inventario.splice(selectedItemIndex, 1);
+        } else if (item.contador > 1) {
+             // Remove 1 unidade
+             item.contador--;
+        } else {
+             // Contador é 1, remove o item
+             data.inventario.splice(selectedItemIndex, 1);
+        }
+        
+        saveData(); 
+        renderInventoryList(); 
+        selectedItemIndex = -1; 
+        document.getElementById('removeItemBtn').disabled = true;
+    }
+});
+
+document.getElementById('clearSalaBtn').addEventListener('click', () => {
+    const unidadeId = document.getElementById('selectUnidadeInv').value;
+    const salaId = document.getElementById('selectSala').value;
+    if (!unidadeId || !salaId) return;
+    if (confirm('Limpar TODOS os itens DESTA sala? Esta ação não pode ser desfeita.')) {
+        data.inventario = data.inventario.filter(i => !(i.unidadeId === unidadeId && i.salaId === salaId));
+        saveData(); renderInventoryList();
+    }
+});
+
+/* ==============================================================
+   RELATÓRIO
+   ============================================================== */
+
+// Variável global já declarada acima. A duplicação foi removida.
+// let reportForcedLayout = null; 
+
+function isMobile() { 
+    return window.innerWidth <= 768; 
+}
+
+function applyReportLayout() {
+    const tableWrapper = document.getElementById('relatorioTableWrapper');
+    const cardsContainer = document.getElementById('cardsRelatorio');
+    const btnTable = document.getElementById('btnLayoutTable');
+    const btnCards = document.getElementById('btnLayoutCards');
+
+    // Remove cores anteriores dos botões
+    [btnTable, btnCards].forEach(btn => btn.classList.remove('btn-primary', 'btn-secondary'));
+
+    let currentLayout = reportForcedLayout;
+    
+    // Define o layout padrão se não houver layout forçado
+    if (currentLayout === null) {
+        currentLayout = isMobile() ? 'cards' : 'table';
+    }
+
+    if (currentLayout === 'cards') {
+        tableWrapper.style.display = 'none';
+        cardsContainer.style.display = 'grid'; // Usa grid
+        btnCards.classList.add('btn-primary');
+        btnTable.classList.add('btn-secondary');
+    } else { // 'table'
+        tableWrapper.style.display = 'block';
+        cardsContainer.style.display = 'none';
+        btnTable.classList.add('btn-primary');
+        btnCards.classList.add('btn-secondary');
+    }
+}
+
+function setupReportLayoutButtons() {
+    document.getElementById('btnLayoutTable').addEventListener('click', () => {
+        reportForcedLayout = 'table';
+        localStorage.setItem('reportForcedLayout', 'table');
+        applyReportLayout();
+    });
+
+    document.getElementById('btnLayoutCards').addEventListener('click', () => {
+        reportForcedLayout = 'cards';
+        localStorage.setItem('reportForcedLayout', 'cards');
+        applyReportLayout();
+    });
+}
+
+function renderRelatorio() {
+    const tbody = document.querySelector('#tabelaRelatorio tbody');
+    const cardsContainer = document.getElementById('cardsRelatorio');
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = ''; 
+    const rows = [];
+
+    data.inventario.forEach(i => {
+        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '—';
+        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '—';
+        const o = data.objetos.find(ob => ob.id === i.objetoId);
+        const imgHtml = o?.imagem ? `<img src="imagens/${o.imagem}" class="obj-img" alt="">` : '';
+        const imgCard = o?.imagem ? `<img src="imagens/${o.imagem}" alt="" style="width: 50px; height: 50px; object-fit: contain; flex-shrink: 0; margin-top: 4px;">` : ''; // Imagem para o card
+
+        // Tabela Row
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${imgHtml}</td><td>${u}</td><td>${s}</td><td>${o?.descricao || ''}</td><td>${i.codigoBarra}</td><td>${i.contador}</td><td>${i.dataHora}</td>`;
+        tbody.appendChild(tr);
+
+        // Card (usando a classe 'card' base)
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="flex">
+                ${imgCard}
+                <div>
+                    <div><span class="label">Unidade:</span> <span class="value">${u}</span></div>
+                    <div><span class="label">Sala:</span> <span class="value">${s}</span></div>
+                    <div><span class="label">Objeto:</span> <span class="value">${o?.descricao || ''}</span></div>
+                    <div><span class="label">Código:</span> <span class="value">${i.codigoBarra}</span></div>
+                    <div><span class="label">QTD:</span> <span class="value">${i.contador}</span></div>
+                    <div><span class="label">Data:</span> <span class="value">${i.dataHora}</span></div>
+                </div>
+            </div>
+        `;
+        cardsContainer.appendChild(card);
+
+        rows.push({tr, data: ['', u, s, o?.descricao || '', i.codigoBarra, i.contador, i.dataHora]});
+    });
+
+    setupFilters(rows);
+    // Nota: applyReportLayout é chamado na navegação da aba
+}
+
+/* Filtros, XLSX, etc. (mantidos iguais) */
+function setupFilters(rows) {
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const col = input.parentElement.dataset.col;
+        const index = ['imagem','unidade','sala','objeto','codigo','qtd','datahora'].indexOf(col);
+        input.addEventListener('input', () => applyFilters(rows));
+        input.addEventListener('focus', () => showCheckboxFilter(input, col, index, rows));
+    });
+}
+
+function showCheckboxFilter(input, col, index, rows) {
+    let container = input.parentElement.querySelector('.filter-checkboxes');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'filter-checkboxes';
+        input.parentElement.appendChild(container);
+    }
+    const values = [...new Set(rows.map(r => r.data[index]))].sort();
+    container.innerHTML = values.map(v => `
+        <label><input type="checkbox" value="${v}" checked> ${v}</label>
+    `).join('');
+    container.querySelectorAll('input').forEach(cb => {
+        cb.addEventListener('change', () => applyFilters(rows));
+    });
+}
+
+function applyFilters(rows) {
+    const filters = {};
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const col = input.parentElement.dataset.col;
+        const checkboxes = input.parentElement.querySelectorAll('.filter-checkboxes input:checked');
+        filters[col] = [...checkboxes].map(cb => cb.value);
+    });
+    rows.forEach(row => {
+        const show = Object.keys(filters).every(col => {
+            const idx = ['imagem','unidade','sala','objeto','codigo','qtd','datahora'].indexOf(col);
+            return filters[col].length === 0 || filters[col].includes(row.data[idx]);
+        });
+        row.tr.style.display = show ? '' : 'none';
+        
+        // Aplica o filtro nos cards (visíveis apenas no modo card)
+        const cardIndex = data.inventario.findIndex(i => i.dataHora === row.data[6]); // Encontra o item original
+        const cardElement = document.getElementById('cardsRelatorio').children[cardIndex];
+        if (cardElement) {
+             cardElement.style.display = show ? 'block' : 'none';
+        }
+    });
+}
+
+/* ==============================================================
+   XLSX
+   ============================================================== */
+document.getElementById('downloadXlsxBtn').addEventListener('click', gerarXlsxEstilizado);
+document.getElementById('downloadXlsxRelatorioBtn').addEventListener('click', gerarXlsxEstilizado);
+
+function gerarXlsxEstilizado() {
+    const wb = XLSX.utils.book_new();
+    const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "1A73E8" } }, alignment: { horizontal: "center" } };
+    const cellStyle = { border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+
+    const unidadeRows = [['Nome', 'E-mail', 'Planilha ID']];
+    data.unidades.forEach(u => unidadeRows.push([u.nome, u.email, u.sheetId || '']));
+    const wsUnidade = XLSX.utils.aoa_to_sheet(unidadeRows);
+    applyStyle(wsUnidade, 'A1:C1', headerStyle);
+    applyBorders(wsUnidade, `A1:C${unidadeRows.length}`);
+    autoWidth(wsUnidade, unidadeRows);
+    XLSX.utils.book_append_sheet(wb, wsUnidade, 'Unidades');
+
+    const salaRows = [['Unidade', 'ID Sala', 'Descrição']];
+    data.salas.forEach(s => {
+        const u = data.unidades.find(un => un.id === s.unidadeId);
+        salaRows.push([u?.nome || '', s.id, s.descricao]);
+    });
+    const wsSalas = XLSX.utils.aoa_to_sheet(salaRows);
+    applyStyle(wsSalas, 'A1:C1', headerStyle);
+    applyBorders(wsSalas, `A1:C${salaRows.length}`);
+    autoWidth(wsSalas, salaRows);
+    XLSX.utils.book_append_sheet(wb, wsSalas, 'Salas');
+
+    const objRows = [['ID', 'Descrição', 'Complemento', 'Imagem']];
+    data.objetos.forEach(o => objRows.push([o.id, o.descricao, o.complemento || '', o.imagem || '']));
+    const wsObjetos = XLSX.utils.aoa_to_sheet(objRows);
+    applyStyle(wsObjetos, 'A1:D1', headerStyle);
+    applyBorders(wsObjetos, `A1:D${objRows.length}`);
+    autoWidth(wsObjetos, objRows);
+    data.objetos.forEach((o, i) => {
+        if (o.imagem) insertImageToSheet(wsObjetos, `imagens/${o.imagem}`, `D${i+2}`);
+    });
+    XLSX.utils.book_append_sheet(wb, wsObjetos, 'Objetos');
+
+    const invRows = [['Imagem','Unidade','Sala','Objeto','Código','Contador','Data/Hora']];
+    data.inventario.forEach(i => {
+        const u = data.unidades.find(un => un.id === i.unidadeId)?.nome || '';
+        const s = data.salas.find(sa => sa.id === i.salaId)?.descricao || '';
+        const o = data.objetos.find(ob => ob.id === i.objetoId);
+        invRows.push(['', u, s, o?.descricao || '', i.codigoBarra, i.contador, i.dataHora]);
+    });
+    const wsInv = XLSX.utils.aoa_to_sheet(invRows);
+    applyStyle(wsInv, 'A1:G1', headerStyle);
+    applyBorders(wsInv, `A1:G${invRows.length}`);
+    autoWidth(wsInv, invRows);
+    data.inventario.forEach((i, idx) => {
+        const obj = data.objetos.find(ob => ob.id === i.objetoId);
+        if (obj?.imagem) insertImageToSheet(wsInv, `imagens/${obj.imagem}`, `A${idx+2}`);
+    });
+    XLSX.utils.book_append_sheet(wb, wsInv, 'Inventário');
+
+    const fileName = `Inventario_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
+
+function applyStyle(ws, range, style) {
+    const ref = XLSX.utils.decode_range(range);
+    for (let r = ref.s.r; r <= ref.e.r; ++r) {
+        for (let c = ref.s.c; c <= ref.e.c; ++c) {
+            const cell = ws[XLSX.utils.encode_cell({r,c})];
+            if (cell) cell.s = style;
+        }
+    }
+}
+
+function applyBorders(ws, range) {
+    const ref = XLSX.utils.decode_range(range);
+    for (let r = ref.s.r; r <= ref.e.r; ++r) {
+        for (let c = ref.s.c; c <= ref.e.c; ++c) {
+            const cell = ws[XLSX.utils.encode_cell({r,c})];
+            if (!cell) {
+                // Se a célula não existe, cria ela para aplicar a borda
+                ws[XLSX.utils.encode_cell({r,c})] = {t:'s', v:'', s: {}};
+            }
+            if (!ws[XLSX.utils.encode_cell({r,c})].s) ws[XLSX.utils.encode_cell({r,c})].s = {};
+            ws[XLSX.utils.encode_cell({r,c})].s.border = {top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};
+        }
+    }
+}
+
+function autoWidth(ws, data) {
+    const colWidths = data[0].map((_,i)=>({wch:10}));
+    data.forEach(row=>{row.forEach((val,j)=>{const len=val?val.toString().length:10; if(colWidths[j].wch<len) colWidths[j].wch=len+2;});});
+    ws['!cols']=colWidths;
+}
+
+function insertImageToSheet(ws, imgPath, cell) {
+    // Esta função requer que as imagens estejam disponíveis na URL /imagens/
+    // Como estamos em um ambiente de código, a imagem não será carregada no XLSX, mas o código é mantido
+    // A função é assíncrona e pode não funcionar em todas as plataformas sem um servidor web real.
+    fetch(imgPath)
+        .then(r => r.blob())
+        .then(blob => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgData = e.target.result.split(',')[1];
+                const img = {
+                    "!type": "image",
+                    "!data": imgData,
+                    "!ext": ".png",
+                    "!pos": { x: 0, y: 0, w: 50, h: 50 }
+                };
+                if (!ws['!images']) ws['!images'] = [];
+                ws['!images'].push(img);
+                // Define a célula como vazia e garante o estilo
+                if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+                if (!ws[cell].s) ws[cell].s = { border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } };
+            };
+            reader.readAsDataURL(blob);
+        })
+        .catch(() => console.warn('Imagem não encontrada:', imgPath));
+}
+
+/* ==============================================================
+   INICIALIZAÇÃO
+   ============================================================== */
+loadData();
+initImageModal();
+initObjetoCards();
+setupReportLayoutButtons(); // Inicializa botões do relatório
+
+window.addEventListener('resize', () => {
+    const activeTab = document.querySelector('.tab.active');
+    if (!activeTab) return;
+    const tabId = activeTab.id;
+    setTimeout(() => {
+        if (tabId === 'tabUnidade') renderUnidades();
+        if (tabId === 'tabLocais') { renderUnidadeSelectLocais(); renderSalas(); }
+        if (tabId === 'tabObjetos') renderObjetos();
+        if (tabId === 'tabInventario') { initInventarioTab(); }
+        if (tabId === 'tabRelatorio') { renderRelatorio(); applyReportLayout(); } // Re-aplica layout ao redimensionar
+    }, 100);
+});
+</script>
+</body>
+</html>
