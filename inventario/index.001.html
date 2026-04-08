@@ -1170,33 +1170,77 @@ function initInventarioTab() {
     const selUnidade = document.getElementById('selectUnidadeInv');
     const selSala = document.getElementById('selectSala');
 
+    // 🔹 SALVAR estado atual
+    const unidadeSelecionada = selUnidade.value;
+    const salaSelecionada = selSala.value;
+
     selUnidade.innerHTML = '<option value="">Selecione...</option>';
     data.unidades.forEach(u => {
-        const opt = document.createElement('option'); opt.value = u.id; opt.textContent = u.nome; selUnidade.appendChild(opt);
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = u.nome;
+        selUnidade.appendChild(opt);
     });
 
-    selUnidade.addEventListener('change', () => {
-        const unidadeId = selUnidade.value;
-        selSala.innerHTML = '<option value="">Selecione...</option>';
-        if (unidadeId) {
-            data.salas.filter(s => s.unidadeId === unidadeId).forEach(s => {
-                const opt = document.createElement('option'); opt.value = s.id; opt.textContent = s.descricao; selSala.appendChild(opt);
+    // 🔹 RESTAURAR unidade
+    if (unidadeSelecionada) {
+        selUnidade.value = unidadeSelecionada;
+    }
+
+    // 🔹 POPULAR salas baseado na unidade restaurada
+    selSala.innerHTML = '<option value="">Selecione...</option>';
+    if (selUnidade.value) {
+        data.salas
+            .filter(s => s.unidadeId === selUnidade.value)
+            .forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.descricao;
+                selSala.appendChild(opt);
             });
-        }
-        updateUnidadeLocalTitle();
-        renderInventoryList();
-    });
+    }
 
-    selSala.addEventListener('change', () => {
-        updateUnidadeLocalTitle();
-        renderInventoryList();
-    });
+    // 🔹 RESTAURAR sala
+    if (salaSelecionada) {
+        selSala.value = salaSelecionada;
+    }
 
     updateUnidadeLocalTitle();
     renderInventoryList();
-    initObjetoCards(); // Garante que os cards de objeto sejam inicializados
+
+    if (!selUnidade.dataset.binded) {
+        selUnidade.addEventListener('change', () => {
+            const unidadeId = selUnidade.value;
+    
+            const selSala = document.getElementById('selectSala');
+            selSala.innerHTML = '<option value="">Selecione...</option>';
+    
+            if (unidadeId) {
+                data.salas
+                    .filter(s => s.unidadeId === unidadeId)
+                    .forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.descricao;
+                        selSala.appendChild(opt);
+                    });
+            }
+    
+            updateUnidadeLocalTitle();
+            renderInventoryList();
+        });
+    
+        selSala.addEventListener('change', () => {
+            updateUnidadeLocalTitle();
+            renderInventoryList();
+        });
+    
+        // 🔐 marca como já configurado
+        selUnidade.dataset.binded = "true";
+    }
 }
 
+    
 function updateUnidadeLocalTitle() {
     const u = document.getElementById('selectUnidadeInv').selectedOptions[0]?.textContent || 'Unidade';
     const s = document.getElementById('selectSala').selectedOptions[0]?.textContent || 'Local';
