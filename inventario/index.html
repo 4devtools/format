@@ -1513,8 +1513,19 @@ function setupFilters(rows) {
     document.querySelectorAll('.filter-input').forEach(input => {
         const col = input.parentElement.dataset.col;
         const index = ['imagem','unidade','sala','objeto','codigo','qtd','datahora'].indexOf(col);
-        input.addEventListener('input', () => applyFilters(rows));
+        input.addEventListener('input', () => {
+            showCheckboxFilter(input, col, index, rows);
+            applyFilters(rows);
+        });
         input.addEventListener('focus', () => showCheckboxFilter(input, col, index, rows));
+        
+        // Fecha a lista ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!input.parentElement.contains(e.target)) {
+                const container = input.parentElement.querySelector('.filter-checkboxes');
+                if (container) container.classList.add('hidden');
+            }
+        });
     });
 }
 
@@ -1525,10 +1536,24 @@ function showCheckboxFilter(input, col, index, rows) {
         container.className = 'filter-checkboxes';
         input.parentElement.appendChild(container);
     }
-    const values = [...new Set(rows.map(r => r.data[index]))].sort();
-    container.innerHTML = values.map(v => `
+    container.classList.remove('hidden');
+    
+    const searchTerm = input.value.toLowerCase();
+    const values = [...new Set(rows.map(r => r.data[index]))]
+        .filter(v => String(v).toLowerCase().includes(searchTerm))
+        .sort();
+
+    container.innerHTML = `<label><input type="checkbox" class="select-all" checked> [ ] Todos</label>`;
+    container.innerHTML += values.map(v => `
         <label><input type="checkbox" value="${v}" checked> ${v}</label>
     `).join('');
+
+    const selectAll = container.querySelector('.select-all');
+    selectAll.addEventListener('change', () => {
+        container.querySelectorAll('input').forEach(cb => cb.checked = selectAll.checked);
+        applyFilters(rows);
+    });
+
     container.querySelectorAll('input').forEach(cb => {
         cb.addEventListener('change', () => applyFilters(rows));
     });
