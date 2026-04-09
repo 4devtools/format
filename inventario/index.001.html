@@ -450,6 +450,9 @@
             <span class="material-icons text-lg mr-1">grid_view</span> Cards
         </button>
     </div>
+    
+    <button class="btn btn-primary mb-4" id="importXlsxBtn">Importar Relatório XLSX</button>
+    <input type="file" id="importFileInput" accept=".xlsx" class="hidden">
 
     <button class="btn btn-success" id="downloadXlsxRelatorioBtn">Gerar Relatório XLSX</button>
     <div class="table-wrapper" id="relatorioTableWrapper">
@@ -1701,6 +1704,119 @@ function insertImageToSheet(ws, imgPath, cell) {
         })
         .catch(() => console.warn('Imagem não encontrada:', imgPath));
 }
+
+
+/* ==============================================================
+   IMPORTAR XLSX
+   ============================================================== */
+document.getElementById('importXlsxBtn').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+});
+
+document.getElementById('importFileInput').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const dataBuffer = e.target.result;
+        const workbook = XLSX.read(dataBuffer, { type: 'array' });
+
+        try {
+            // Importar Unidades
+            const unidadesSheet = workbook.Sheets['Unidades'];
+            if (unidadesSheet) {
+                const importedUnidades = XLSX.utils.sheet_to_json(unidadesSheet);
+                importedUnidades.forEach(iu => {
+                    const existingUnit = data.unidades.find(u => u.nome === iu.Nome);
+                    if (existingUnit) {
+                        existingUnit.email = iu.Email || existingUnit.email;
+                        existingUnit.sheetId = iu.Planilha || existingUnit.sheetId;
+                    } else {
+                        data.unidades.push({ id: 'u' + Date.now(), nome: iu.Nome, email: iu.Email || '', sheetId: iu.Planilha || '' });
+                    }
+                });
+            }
+
+            // Importar Salas
+            const salasSheet = workbook.Sheets['Salas'];
+            if (salasSheet) {
+                const importedSalas = XLSX.utils.sheet_to_json(salasSheet);
+                importedSalas.forEach(is => {
+                    const parentUnit = data.unidades.find(u => u.nome === is.Unidade);
+                    if (!parentUnit) {
+                        console.warn(`Unidade '${is.Unidade}' não encontrada para a sala '${is['ID Sala']}'. Sala ignorada.`);
+                        return;
+                    }
+                    const existingSala = data.salas.find(s => s.unidadeId === parentUnit.id && s.id === is['ID Sala']);
+                    if (existingSala) {
+                        existingSala.descricao = is.Descrição || existingSala.descricao;
+                    } else {
+                        data.salas.push({ id: is['ID Sala'], unidadeId: parentUnit.id, descricao: is.Descrição || '' });
+                    }
+                });
+            }
+
+            // Importar Objetos
+            const objetosSheet = workbook.Sheets['Objetos'];
+            if (objetosSheet) {
+                const importedObjetos = XLSX.utils.sheet_to_json(objetosSheet);
+                importedObjetos.forEach(io => {
+                    const existingObjeto = data.objetos.find(o => o.id === io.ID);
+                    if (existingObjeto) {
+                        existingObjeto.descricao = io.Descrição || existingObjeto.descricao;
+                        existingObjeto.complemento = io.Complemento || existingObjeto.complemento;
+                        existingObjeto.imagem = io.Imagem || existingObjeto.imagem;
+                    } else {
+                        data.objetos.push({ id: io.ID, descricao: io.Descrição || '', complemento: io.Complemento || '', imagem: io.Imagem || '' });
+                    }
+                });
+            }
+
+            // Importar Inventário
+            const inventarioSheet = workbook.Sheets['Inventário'];
+            if (inventarioSheet) {
+                const importedInventario = XLSX.utils.sheet_to_json(inventarioSheet);
+                importedInventario.forEach(ii => {
+                    const parentUnit = data.unidades.find(u => u.nome === ii.Unidade);
+                    const parentSala = data.salas.find(s => s.unidadeId === parentUnit?.id && s.descricao === ii.Sala);
+                    const parentObjeto = data.objetos.find(o => o.descricao === ii.Objeto);
+
+                    if (!parentUnit || !parentSala || !parentObjeto) {
+                        console.warn(`Item de inventário para Unidade:'${ii.Unidade}', Sala:'${ii.Sala}', Objeto:'${ii.Objeto}' não pode ser importado devido a dados ausentes.`);
+                        return;
+                    }
+
+                    const existingItem = data.inventario.find(item =>
+                        item.unidadeId === parentUnit.id && item.salaId === parentSala.id &&
+                        item.objetoId === parentObjeto.id && item.codigoBarra === ii.Código
+                    );
+
+                    if (existingItem) {
+                        existingItem.contador = (existingItem.contador || 0) + (ii.Contador || 0);
+                        const existingDate = new Date(existingItem.dataHora);
+                        const importedDate = new Date(ii['Data/Hora']);
+                        if (importedDate > existingDate) { existingItem.dataHora = ii['Data/Hora']; }
+                    } else {
+                        data.inventario.push({ unidadeId: parentUnit.id, salaId: parentSala.id, objetoId: parentObjeto.id, codigoBarra: ii.Código, contador: ii.Contador || 1, dataHora: ii['Data/Hora'] });
+                    }
+                });
+            }
+
+            saveData();
+            alert('Relatório importado com sucesso!');
+            // Re-renderizar a aba atual para refletir as mudanças
+            const activeTabBtn = document.querySelector('.tab-btn.active');
+            if (activeTabBtn) activeTabBtn.click();
+
+        } catch (error) {
+            console.error('Erro ao importar o arquivo XLSX:', error);
+            alert('Erro ao importar o arquivo XLSX. Verifique o formato.');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+});
+
 
 /* ==============================================================
    INICIALIZAÇÃO
