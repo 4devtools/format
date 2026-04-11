@@ -1643,7 +1643,16 @@ function gerarXlsxEstilizado() {
     });
     XLSX.utils.book_append_sheet(wb, wsInv, 'Inventário');
 
-    const fileName = `Inventario_${new Date().toISOString().slice(0,10)}.xlsx`;
+    let baseName = 'Inventario';
+    const selectedUnidadeId = document.getElementById('selectUnidadeInv').value;
+    if (selectedUnidadeId) {
+        const unidade = data.unidades.find(u => u.id === selectedUnidadeId);
+        if (unidade && unidade.sheetId) {
+            baseName = unidade.sheetId;
+        }
+    }
+
+    const fileName = `${baseName}_${new Date().toISOString().slice(0,10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
 
