@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ativo Fixo</title>
 
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <!-- ZXing (leitor de código de barras) - Adicionado ?v=1.0.3 -->
     <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js?v=1.0.3"></script>
     <!-- SheetJS (XLSX) - Adicionado ?v=1.0.3 -->
@@ -152,7 +157,7 @@
         .hidden {display:none;}
         .item {padding:8px;background:#f9f9f9;margin:5px 0;border-radius:4px;cursor:pointer;}
         .item.selected {background:#bbdefb;}
-        .toast {position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:8px 16px;background:#333;color:#fff;border-radius:4px;opacity:0;transition:opacity .3s;}
+        .toast {position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:12px 24px;background:#333;color:#fff;border-radius:8px;opacity:0;transition:opacity .3s;z-index:3000;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);text-align:center;min-width:250px;}
         .toast.show {opacity:1;}
         .obj-img {max-height:2.2rem;vertical-align:middle;margin-right:6px;}
         .preview-img {max-height:80px;margin-top:6px;border:1px solid #ddd;border-radius:4px;}
@@ -261,6 +266,24 @@
             margin-top: 10px;
         }
         
+        /* Ajustes para a Tabela de Relatório no Mobile (Rolagem Horizontal) */
+        #tabelaRelatorio {
+            table-layout: auto; /* Permite que as colunas expandam conforme o conteúdo */
+            width: max-content; /* Força a tabela a ocupar o espaço real necessário */
+            min-width: 100%;
+        }
+
+        #tabelaRelatorio th, #tabelaRelatorio td {
+            white-space: nowrap; /* Impede que o texto quebre e esprema as colunas */
+            word-break: normal;
+            padding: 12px 15px;
+        }
+
+        #tabelaRelatorio .filter-input {
+            min-width: 120px; /* Garante que o campo de filtro seja utilizável no toque */
+            margin-top: 8px;
+        }
+
         @media (max-width: 768px) {
             #cardsRelatorio {
                 grid-template-columns: repeat(2, 1fr); /* 2 colunas no mobile */
@@ -474,6 +497,8 @@
     <div id="cardsRelatorio" style="display:none;"></div> 
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
 /* ==============================================================
    DADOS GLOBAIS
@@ -494,6 +519,17 @@ let selectedImage = null;
 // Novo estado para controlar o layout do relatório
 let reportForcedLayout = null; // null (responsivo), 'table', ou 'cards'
 
+function showToast(msg, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    // Cores baseadas no tipo
+    if (type === 'danger') toast.style.backgroundColor = '#d32f2f';
+    else if (type === 'success') toast.style.backgroundColor = '#4caf50';
+    else toast.style.backgroundColor = '#333';
+    
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
 
 const IMAGES = [
     "armario2p.png","armario4p.png","armariometal.png","arquivogaveteiro.png",
@@ -903,7 +939,7 @@ document.getElementById('addUnidade').addEventListener('click', () => {
     const email = document.getElementById('unidadeEmail').value.trim();
     const sheetId = document.getElementById('unidadeSheetId').value.trim();
 
-    if (!nome) return alert('Nome é obrigatório');
+    if (!nome) return showToast('O nome da unidade é obrigatório', 'danger');
     
     // CORRIGIDO: usa selectedUnidadeIndex para CRUD
     if (selectedUnidadeIndex !== -1) {
@@ -919,6 +955,7 @@ document.getElementById('addUnidade').addEventListener('click', () => {
     document.getElementById('unidadeSheetId').value = '';
     
     saveData(); 
+    showToast('Unidade salva com sucesso!', 'success');
     renderUnidades();
 });
 
@@ -978,7 +1015,7 @@ document.getElementById('addSala').addEventListener('click', () => {
     }
     let desc = document.getElementById('salaDesc').value.trim();
 
-    if (!unidadeId || !id || !desc) return alert('Preencha todos os campos');
+    if (!unidadeId || !id || !desc) return showToast('Preencha todos os campos da sala', 'danger');
 
     // CORRIGIDO: usa selectedSalaIndex para CRUD
     if (selectedSalaIndex !== -1) {
@@ -992,6 +1029,7 @@ document.getElementById('addSala').addEventListener('click', () => {
     document.getElementById('salaId').value = '';
     document.getElementById('salaDesc').value = '';
     saveData(); 
+    showToast('Sala salva com sucesso!', 'success');
     renderSalas();
 });
 
@@ -1062,7 +1100,7 @@ document.getElementById('addObjeto').addEventListener('click', () => {
         id = gerarProximoId('OB', data.objetos, 4);
     }
     
-    if (!id || !desc) return alert('Preencha ID e descrição');
+    if (!id || !desc) return showToast('ID e descrição do objeto são obrigatórios', 'danger');
 
     // CORRIGIDO: usa selectedObjetoIndex para CRUD
     if (selectedObjetoIndex !== -1) {
@@ -1081,6 +1119,7 @@ document.getElementById('addObjeto').addEventListener('click', () => {
     document.getElementById('selectedImagePreview').style.display = 'none';
     
     saveData(); 
+    showToast('Tipo de objeto salvo!', 'success');
     renderObjetos();
 });
 
@@ -1310,9 +1349,14 @@ function startScanner() {
         }
     };
 
-    codeReader.decodeFromVideoDevice(undefined, video, (result, err) => {
+    codeReader.decodeFromVideoDevice(undefined, video, (result, error) => {
+        if (error && !(error instanceof ZXing.NotFoundException)) {
+            // Erros de leitura comuns são ignorados, mas erros reais são logados
+            console.debug('ZXing Error:', error);
+        }
+
         if (result) {
-            beepSound.play();
+            beepSound.play().catch(() => {}); // Ignora erro de autoplay se houver
             document.getElementById('barcodeInput').value = result.getText();
             
             if (document.getElementById('modoContinuo').checked) {
@@ -1323,7 +1367,11 @@ function startScanner() {
                 addInventoryItem(); 
             }
         }
-    }, hints, constraints); // Passa constraints para o decodeFromVideoDevice
+    }, hints, constraints).catch(err => {
+        console.error('Camera access error:', err);
+        showToast('Não foi possível acessar a câmera. Verifique as permissões.', 'danger');
+        stopScanner();
+    });
 
     document.getElementById('scanBtn').textContent = 'Parar Leitura';
 }
@@ -1353,14 +1401,14 @@ function addInventoryItem() {
     const salaId = document.getElementById('selectSala').value;
     
     // CORRIGIDO: Usa selectedObjetoIndex do array global 'data.objetos'
-    if (selectedObjetoIndex === -1 || !data.objetos[selectedObjetoIndex]) return alert('Selecione um Tipo de Objeto');
+    if (selectedObjetoIndex === -1 || !data.objetos[selectedObjetoIndex]) return showToast('Selecione um Tipo de Objeto primeiro', 'danger');
     const objId = data.objetos[selectedObjetoIndex].id;
     
     const codigo = document.getElementById('barcodeInput').value.trim();
 
     // Verificação de campos de Unidade e Sala
-    if (!unidadeId || !salaId) return alert('Selecione a Unidade e a Sala antes de registrar o item.');
-    if (!codigo) return alert('O campo Código não pode estar vazio.');
+    if (!unidadeId || !salaId) return showToast('Selecione a Unidade e a Sala primeiro', 'danger');
+    if (!codigo) return showToast('O campo Código não pode estar vazio', 'danger');
 
     const existente = data.inventario.find(i => i.unidadeId === unidadeId && i.salaId === salaId && i.objetoId === objId && i.codigoBarra === codigo);
     if (existente) {
@@ -1371,6 +1419,7 @@ function addInventoryItem() {
     }
 
     saveData();
+    showToast('Item registrado!', 'success');
     renderInventoryList();
     document.getElementById('barcodeInput').value = '';
     
@@ -1813,14 +1862,14 @@ document.getElementById('importFileInput').addEventListener('change', (event) =>
             }
 
             saveData();
-            alert('Relatório importado com sucesso!');
+            showToast('Relatório importado com sucesso!', 'success');
             // Re-renderizar a aba atual para refletir as mudanças
             const activeTabBtn = document.querySelector('.tab-btn.active');
             if (activeTabBtn) activeTabBtn.click();
 
         } catch (error) {
             console.error('Erro ao importar o arquivo XLSX:', error);
-            alert('Erro ao importar o arquivo XLSX. Verifique o formato.');
+            showToast('Erro ao importar XLSX. Verifique o formato do arquivo.', 'danger');
         }
     };
     reader.readAsArrayBuffer(file);
@@ -1831,6 +1880,16 @@ document.getElementById('importFileInput').addEventListener('change', (event) =>
    INICIALIZAÇÃO
    ============================================================== */
 loadData();
+
+// Registro do Service Worker para PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registrado!', reg))
+            .catch(err => console.err('Erro ao registrar SW:', err));
+    });
+}
+
 initImageModal();
 initObjetoCards();
 setupReportLayoutButtons(); // Inicializa botões do relatório
