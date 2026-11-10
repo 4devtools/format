@@ -325,7 +325,7 @@
         <label>Unidade</label>
         <select id="unidadeSelectLocais"><option value="">Selecione...</option></select>
     </div>
-    <div class="form-group"><label>ID da Sala</label><input type="text" id="salaId"></div>
+    <div class="form-group"><label>ID da Sala</label><input type="text" id="salaId" readonly></div>
     <div class="form-group"><label>Descrição</label><input type="text" id="salaDesc"></div>
     <button class="btn btn-primary" id="addSala">Adicionar Sala</button>
     <button class="btn btn-danger hidden" id="removeSala">Remover Selecionada</button>
@@ -338,7 +338,7 @@
 <!-- ====================== OBJETOS ====================== -->
 <div id="tabObjetos" class="tab">
     <h2>Cadastro de Tipos de Objetos</h2>
-    <div class="form-group"><label>ID do Objeto</label><input type="text" id="objId"></div>
+    <div class="form-group"><label>ID do Objeto</label><input type="text" id="objId" readonly></div>
     <div class="form-group"><label>Descrição</label><input type="text" id="objDesc"></div>
     <div class="form-group"><label>Complemento</label><input type="text" id="objComp"></div>
 
@@ -716,7 +716,7 @@ function renderSalas() {
                 selectedSalaIndex = indexInGlobalArray;
             } else {
                 document.getElementById('unidadeSelectLocais').value = '';
-                document.getElementById('salaId').value = '';
+                document.getElementById('salaId').value = gerarProximoId('SALA', data.salas, 3);
                 document.getElementById('salaDesc').value = '';
                 selectedSalaIndex = -1;
             }
@@ -763,6 +763,7 @@ function renderSalas() {
         };
         cardsContainer.appendChild(card);
     });
+    document.getElementById('salaId').value = gerarProximoId('SALA', data.salas, 3);
 }
 
 /* OBJETOS - CORRIGIDO: Lógica de seleção e população de campos unificada e com toggle. */
@@ -797,7 +798,7 @@ function renderObjetos() {
                  }
              } else {
                  selectedObjetoIndex = -1;
-                 document.getElementById('objId').value = '';
+                 document.getElementById('objId').value = gerarProximoId('OBJ', data.objetos, 3);
                  document.getElementById('objDesc').value = '';
                  document.getElementById('objComp').value = '';
                  selectedImage = null;
@@ -854,6 +855,7 @@ function renderObjetos() {
         };
         cardsContainer.appendChild(card);
     });
+    document.getElementById('objId').value = gerarProximoId('OBJ', data.objetos, 3);
 }
 
 /* INVENTÁRIO LISTA - CORRIGIDO: Lógica de seleção com toggle e população do campo Código. */
@@ -1008,11 +1010,9 @@ function gerarProximoId(prefixo, lista, tamanho) {
     
 document.getElementById('addSala').addEventListener('click', () => {
     let unidadeId = document.getElementById('unidadeSelectLocais').value;
-    let id = document.getElementById('salaId').value.trim();
-    // AUTO ID
-    if (!id) {
-        id = gerarProximoId('SL', data.salas, 3);
-    }
+    let id = selectedSalaIndex === -1
+        ? gerarProximoId('SALA', data.salas, 3)
+        : data.salas[selectedSalaIndex].id;
     let desc = document.getElementById('salaDesc').value.trim();
 
     if (!unidadeId || !id || !desc) return showToast('Preencha todos os campos da sala', 'danger');
@@ -1091,15 +1091,12 @@ function initImageModal() {
 }
 
 document.getElementById('addObjeto').addEventListener('click', () => {
-    let id = document.getElementById('objId').value.trim();
+    let id = selectedObjetoIndex === -1
+        ? gerarProximoId('OBJ', data.objetos, 3)
+        : data.objetos[selectedObjetoIndex].id;
     let desc = document.getElementById('objDesc').value.trim();
     let comp = document.getElementById('objComp').value.trim();
 
-    // AUTO ID
-    if (!id) {
-        id = gerarProximoId('OB', data.objetos, 4);
-    }
-    
     if (!id || !desc) return showToast('ID e descrição do objeto são obrigatórios', 'danger');
 
     // CORRIGIDO: usa selectedObjetoIndex para CRUD
