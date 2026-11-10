@@ -1,6 +1,6 @@
 // sw.js - Service Worker do Controle de Ativo Fixo
 // Para publicar uma nova versão do app, basta mudar VERSION abaixo.
-const VERSION = 'v2.0.1';
+const VERSION = 'v2.0.2';
 const CACHE = 'ativo-fixo-' + VERSION;
 
 const CORE = [
