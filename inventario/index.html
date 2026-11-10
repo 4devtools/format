@@ -1284,9 +1284,30 @@ const clone = o => JSON.parse(JSON.stringify(o));
 $('#btnImport').onclick = () => $('#importFile').click();
 $('#importFile').onchange = async e => {
   const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+
+  // CORREÇÃO: Tenta carregar a biblioteca dinamicamente se ela falhar ao carregar localmente
+  if (typeof window.XLSX === 'undefined') {
+    try {
+      toast('Carregando biblioteca da planilha...', 'warn', 2000);
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    } catch (e) {
+      return toast('Erro ao carregar a biblioteca. Verifique sua conexão.', 'danger');
+    }
+    if (typeof window.XLSX === 'undefined') {
+      return toast('Biblioteca da planilha não carregou. Recarregue a página.', 'danger');
+    }
+  }
+
   let inc;
   try { inc = parseWorkbook(XLSX.read(await file.arrayBuffer(), { type: 'array' })); } catch (err) { console.error(err); inc = null; }
   if (!inc) return info('Arquivo não reconhecido', '<p>Não encontrei as abas <b>Inventário</b>, <b>Unidades</b>, <b>Salas</b> ou <b>Objetos</b>.</p><p>Use uma planilha gerada por este aplicativo.</p>');
+  
   const trial = clone(data), st = mergeInto(trial, inc);
   const novos = st.u + st.s + st.o + st.i + st.upd;
   const body = `<p><b>${esc(file.name)}</b><br><small>contém ${plural(inc.unidades.length, 'unidade', 'unidades')}, ${plural(inc.salas.length, 'sala', 'salas')}, ${plural(inc.objetos.length, 'objeto', 'objetos')} e ${plural(inc.inventario.length, 'item', 'itens')}</small></p>
@@ -1296,21 +1317,24 @@ $('#importFile').onchange = async e => {
     ${st.upd ? `• ${plural(st.upd, 'item atualizado', 'itens atualizados')} (mesmo código em outra sala, valeu o mais recente)<br>` : ''}
     ${st.skip ? `<span style="color:var(--danger)">✖ ${plural(st.skip, 'item não pôde ser importado', 'itens não puderam ser importados')} (faltam sala/objeto; ex.: ${esc(st.skipEx.join(', '))})</span>` : ''}</div>
     <p class="muted">No celular agora: ${plural(data.inventario.length, 'item', 'itens')}.</p>`;
+  
   const choice = await ask({ title: 'Importar planilha', body, dismiss: 'cancel', buttons: [
     { label: novos ? 'Mesclar (recomendado)' : 'Mesclar (nada novo)', value: 'merge', cls: 'primary' },
     { label: 'Substituir tudo', value: 'replace' }, { label: 'Cancelar', value: 'cancel' }] });
+  
   if (choice === 'cancel') return;
   try { localStorage.setItem(BKP_KEY, JSON.stringify(data)); } catch {}
+  
   if (choice === 'replace') {
     const ok = await ask({ title: 'Substituir tudo?', body: `<p>Isso <b>apaga</b> os ${plural(data.inventario.length, 'item', 'itens')} que estão no celular e usa só o conteúdo da planilha.</p>`,
       buttons: [{ label: 'Sim, substituir', value: true, cls: 'danger' }, { label: 'Cancelar', value: false }], dismiss: false });
     if (!ok) return;
     const fresh = emptyData(); fresh.meta = { ...data.meta }; mergeInto(fresh, inc); data = fresh;
   } else data = trial;
+  
   undoStack.length = 0; save(); fixCtx(); saveCtx(); renderAll();
   toast(`Importação concluída: ${plural(st.i, 'item novo', 'itens novos')}`, 'success', 3500);
 };
-
 /* ==============================================================
    INICIALIZAÇÃO
    ============================================================== */
