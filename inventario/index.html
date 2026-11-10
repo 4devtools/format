@@ -1135,7 +1135,44 @@ const whereHtml = rec => `<div class="where"><div class="fn">${esc(rec.name)}</d
   <small style="display:block;margin-top:4px;color:#1b4d2b">Para achar: abra o app <b>Arquivos</b> ▸ <b>Downloads</b> (ou toque na notificação “Download concluído” do Chrome). Se o Chrome estiver configurado para perguntar onde salvar, o arquivo está no local que você escolheu.</small></div>
   <small>${plural(rec.items, 'item', 'itens')} · ${fmtSize(rec.size)} · ${fmtDT(rec.at)}</small>`;
 
+
 async function gerarPlanilha() {
+  // CORREÇÃO: Tenta carregar a biblioteca dinamicamente se ela falhou ao carregar localmente
+  if (typeof window.XLSX === 'undefined') {
+    try {
+      toast('Carregando biblioteca da planilha...', 'warn', 2000);
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    } catch (e) {
+      return toast('Erro ao carregar a biblioteca. Verifique sua conexão com a internet.', 'danger');
+    }
+    
+    // Se mesmo após a tentativa ainda não existir, aborta
+    if (typeof window.XLSX === 'undefined') {
+      return toast('Biblioteca da planilha não carregou. Recarregue a página.', 'danger');
+    }
+  }
+
+  if (!data.inventario.length) return info('Nada para exportar', '<p>Ainda não há itens registrados.</p>');
+  let blob; const name = fileName();
+  try { blob = new Blob([XLSX.write(buildWorkbook(), { bookType: 'xlsx', type: 'array' })], { type: XLSX_MIME }); }
+  catch (e) { console.error(e); return toast('Erro ao gerar a planilha', 'danger'); }
+  download(blob, name);
+  const rec = { id: uid(), name, at: nowISO(), items: data.inventario.length, size: blob.size };
+  data.meta.lastExportAt = rec.at; save();
+  lastExport = rec; try { localStorage.setItem('ativoFixoUltimoArquivo', JSON.stringify(rec)); } catch {}
+  try { await IDB.put({ ...rec, blob }); const all = await IDB.all(); for (const x of all.slice(10)) await IDB.del(x.id); } catch (e) { console.warn('histórico indisponível', e); }
+  renderAll();
+  const m = modal(`<h3>✅ Planilha gerada</h3>${whereHtml(rec)}<div class="mbtns"><button class="btn primary" data-share>📤 Compartilhar / enviar</button><button class="btn" data-ok>Fechar</button></div>`);
+  $('[data-share]', m.el).onclick = () => compartilhar(blob, name); $('[data-ok]', m.el).onclick = () => m.close();
+}
+  
+async function gerarPlanilha_Old() {
   if (typeof XLSX === 'undefined') return toast('Biblioteca da planilha não carregou. Recarregue a página.', 'danger');
   if (!data.inventario.length) return info('Nada para exportar', '<p>Ainda não há itens registrados.</p>');
   let blob; const name = fileName();
