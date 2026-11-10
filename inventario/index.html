@@ -165,7 +165,10 @@ details.card summary{font-weight:700;cursor:pointer;min-height:32px;display:flex
 <body>
 
 <header id="top">
-  <h1>Controle de Ativo Fixo</h1>
+  <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+    <h1 style="flex:none; line-height:1.1;">Controle de Ativo Fixo</h1>
+    <span id="app-version-display" style="font-size:0.75rem; font-weight:500; opacity:0.8; margin-top:2px;"></span>
+  </div>
   <button class="chip warn hidden" id="pendChip" type="button"></button>
   <span class="chip off hidden" id="netChip">sem internet</span>
 </header>
@@ -1339,6 +1342,8 @@ $('#importFile').onchange = async e => {
    INICIALIZAÇÃO
    ============================================================== */
 load(); updateNet();
+$('#app-version-display').textContent = 'v' + APP_VERSION; // <- Linha adicionada
+
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(err => console.error('SW', err)));
 go('lev');
