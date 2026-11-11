@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administração - Curso de Espanhol</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: { 50: '#fff1f2', 100: '#ffe4e6', 500: '#e11d48', 600: '#be123c', 700: '#9f1239', 800: '#881337', 900: '#4c0519' } } } }
+    }
+  </script>
+  <style>
+    input[type="text"], input.uppercase-input, textarea { text-transform: uppercase; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    #loader { display: none; }
+    .loading #loader { display: flex; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- OVERLAY LOADING -->
+  <div id="loader" class="fixed inset-0 bg-slate-900/80 z-[100] items-center justify-center backdrop-blur-sm">
+    <div class="flex flex-col items-center">
+      <i class="fa-solid fa-circle-notch fa-spin text-4xl text-brand-500 mb-4"></i>
+      <span class="text-white font-bold text-sm tracking-widest uppercase">Sincronizando com Banco de Dados...</span>
+    </div>
+  </div>
+
+  <header class="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-900 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-400 text-brand-900 font-black text-xl flex items-center justify-center shadow-inner">É</div>
+        <div>
+          <h1 class="text-lg font-bold leading-tight tracking-wide">CURSO DE ESPANHOL</h1>
+          <p class="text-xs text-amber-300 font-medium">Painel Administrativo</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3" id="nav-auth-section"></div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <section id="admin-section" class="space-y-6 hidden">
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 bg-brand-100 text-brand-800 text-xs font-bold rounded-full">Painel Administrativo</span>
+              <span id="adm-user-badge" class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-full"></span>
+              <span id="sync-status" class="text-[10px] text-slate-400 flex items-center gap-1"></span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 mt-1">Gestão Integrada do Curso</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="refreshData(true)" title="Buscar dados novos" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors flex items-center gap-1.5">
+              <i id="sync-icon" class="fa-solid fa-rotate"></i> Atualizar
+            </button>
+            <button onclick="openPinModal()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold text-xs rounded-xl transition-colors flex items-center gap-1.5">
+              <i class="fa-solid fa-key"></i> Alterar meu PIN
+            </button>
+            <button onclick="logoutAdmin()" class="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs rounded-xl transition-colors flex items-center gap-1.5">
+              <i class="fa-solid fa-right-from-bracket"></i> Sair do Painel
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1 sm:space-x-2 overflow-x-auto mt-4 pt-1 pb-2 scrollbar-none" id="admin-tabs"></div>
+      </div>
+
+      <!-- TAB: CANDIDATOS -->
+      <div id="tab-candidatos" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 class="text-lg font-bold text-slate-900 mb-6">Candidatos Inscritos (Aguardando Aprovação)</h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 uppercase text-slate-600 font-bold border-b border-slate-200">
+                <tr><th class="p-3">Candidato</th><th class="p-3">Localidade</th><th class="p-3">Turmas Escolhidas (preferência)</th><th class="p-3 text-center">Ações</th></tr>
+              </thead>
+              <tbody id="tbl-candidatos-body" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: ALUNOS -->
+      <div id="tab-alunos" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 class="text-lg font-bold text-slate-900 mb-6">Lista Geral de Alunos Ativos</h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 uppercase text-slate-600 font-bold border-b border-slate-200">
+                <tr><th class="p-3">Aluno</th><th class="p-3">Turma</th><th class="p-3">Status / Inclusão</th><th class="p-3 text-center">Ações</th></tr>
+              </thead>
+              <tbody id="tbl-alunos-body" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: DOAÇÕES -->
+      <div id="tab-doacoes" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 class="text-lg font-bold text-slate-900 mb-6">Monitoramento Financeiro</h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 uppercase text-slate-600 font-bold border-b border-slate-200">
+                <tr><th class="p-3">Aluno</th><th class="p-3">Datas (Prev/Efetiva)</th><th class="p-3">Status</th><th class="p-3">Registro</th><th class="p-3 text-center">Ação</th></tr>
+              </thead>
+              <tbody id="tbl-doacoes-body" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: TURMAS -->
+      <div id="tab-turmas" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Gestão de Turmas</h3>
+            <button onclick="openTurmaModal()" class="px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl"><i class="fa-solid fa-plus"></i> NOVA TURMA</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="cards-turmas-container"></div>
+        </div>
+      </div>
+
+      <!-- TAB: AGENDA -->
+      <div id="tab-cronograma" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Cronograma de Aulas</h3>
+            <button onclick="openCronogramaModal()" class="px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl"><i class="fa-solid fa-plus"></i> NOVA AULA</button>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 uppercase text-slate-600 font-bold border-b border-slate-200">
+                <tr><th class="p-3">Nº Aula / Data</th><th class="p-3">Tópico</th><th class="p-3">Tarefa</th><th class="p-3 text-center">Ações</th></tr>
+              </thead>
+              <tbody id="tbl-cronograma-body" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: FREQUENCIA -->
+      <div id="tab-frequencia" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 class="text-lg font-bold text-slate-900 mb-4">Registro de Frequência & Microdesafios</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Selecione a Turma</label>
+              <select id="freq-select-turma" onchange="trocarSelecaoFreq(this)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Selecione a Aula</label>
+              <select id="freq-select-aula" onchange="trocarSelecaoFreq(this)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+            </div>
+          </div>
+          <div id="freq-grid-container" class="hidden space-y-4">
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+              <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-100 uppercase text-slate-600 font-bold border-b border-slate-200">
+                  <tr><th class="p-3">Aluno</th><th class="p-3 text-center">Presença</th><th class="p-3 text-center">Tarefa</th><th class="p-3">Obs</th></tr>
+                </thead>
+                <tbody id="tbl-frequencia-body" class="divide-y divide-slate-200"></tbody>
+              </table>
+            </div>
+            <div class="flex justify-end">
+              <button onclick="saveFrequenciaRecords()" class="px-6 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl"><i class="fa-solid fa-floppy-disk"></i> SALVAR DADOS</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: USUARIOS -->
+      <div id="tab-usuarios" class="admin-tab-content hidden space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Gestão de Usuários Administrativos</h3>
+            <button onclick="openUsuarioModal()" class="px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl"><i class="fa-solid fa-user-plus"></i> NOVO USUÁRIO</button>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 uppercase text-slate-600 font-bold border-b border-slate-200">
+                <tr><th class="p-3">Nome</th><th class="p-3">Login</th><th class="p-3">Cargo / Prof</th><th class="p-3">Situação</th><th class="p-3 text-center">Ações</th></tr>
+              </thead>
+              <tbody id="tbl-usuarios-body" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- MODAL: LOGIN -->
+  <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border w-full max-w-md p-6 sm:p-8 relative">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-3 font-bold text-xl"><i class="fa-solid fa-lock"></i></div>
+        <h3 class="text-xl font-bold text-slate-900">Acesso Administrativo</h3>
+      </div>
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Usuário / Login *</label>
+          <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 uppercase-input">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Senha (PIN) *</label>
+          <input type="password" id="login-pin" required inputmode="numeric" autocomplete="current-password" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center text-lg">
+        </div>
+        <button type="submit" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl text-sm uppercase">ENTRAR NO PAINEL</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR DOAÇÃO -->
+  <div id="modal-edit-doacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border w-full max-w-md p-6 relative">
+      <button onclick="closeModal('modal-edit-doacao')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold mb-4">Atualizar Doação</h3>
+      <form onsubmit="saveDoacaoEdit(event)" class="space-y-4">
+        <input type="hidden" id="edit-doacao-id">
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Status da Doação *</label>
+          <select id="edit-doacao-status" class="w-full px-3 py-2 rounded-xl border text-xs">
+            <option value="PENDENTE">PENDENTE</option>
+            <option value="PREPARAÇÃO">PREPARAÇÃO</option>
+            <option value="CONFIRMADO / PAGO">CONFIRMADO / PAGO</option>
+            <option value="PARCELADO EM DIA">PARCELADO EM DIA</option>
+            <option value="EM ATRASO">EM ATRASO</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold uppercase mb-1">Data Prevista *</label>
+            <input type="date" id="edit-doacao-dataprev" class="w-full px-3 py-2 rounded-xl border text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase mb-1">Data Efetiva</label>
+            <input type="date" id="edit-doacao-dataefet" class="w-full px-3 py-2 rounded-xl border text-xs">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Professor Recebedor *</label>
+          <select id="edit-doacao-prof" class="w-full px-3 py-2 rounded-xl border text-xs"></select>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-brand-600 text-white font-bold rounded-xl text-xs uppercase">SALVAR</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: USUARIO -->
+  <div id="modal-usuario" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('modal-usuario')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold mb-4">Cadastrar Usuário</h3>
+      <form onsubmit="saveUsuarioForm(event)" class="space-y-4">
+        <input type="hidden" id="user-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold uppercase mb-1">Nome *</label><input type="text" id="user-nome" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+          <div><label class="block text-xs font-bold uppercase mb-1">Login *</label><input type="text" id="user-login" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+          <div><label class="block text-xs font-bold uppercase mb-1">Cargo *</label><input type="text" id="user-cargo" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+          <div>
+            <label class="block text-xs font-bold uppercase mb-1">PIN (4 a 8 números) <span id="pwd-lbl" class="text-slate-400 font-normal"></span></label>
+            <input type="password" id="user-pin" inputmode="numeric" pattern="\d{4,8}" autocomplete="new-password" class="w-full px-3 py-2 border rounded-xl text-xs text-center">
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 border rounded-xl flex flex-wrap gap-4">
+          <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="user-is-prof" class="text-brand-600"> Este usuário atua como PROFESSOR</label>
+          <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="user-ativo" class="text-brand-600" checked> Usuário ATIVO</label>
+        </div>
+        <div class="bg-slate-50 p-4 border rounded-xl grid grid-cols-2 gap-2 text-xs">
+          <label class="flex gap-2"><input type="checkbox" id="perm-candidatos"> Candidatos</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-alunos"> Alunos</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-doacoes"> Doações</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-turmas"> Turmas</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-cronograma"> Agenda</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-frequencia"> Frequência</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-graficos"> Gráficos</label>
+          <label class="flex gap-2"><input type="checkbox" id="perm-usuarios"> Usuários</label>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" id="btn-del-usuario" onclick="deleteUsuario()" class="hidden px-4 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl text-xs uppercase"><i class="fa-solid fa-trash"></i> Excluir</button>
+          <button type="submit" class="flex-1 py-2.5 bg-brand-600 text-white font-bold rounded-xl text-xs uppercase">SALVAR</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ALTERAR PIN -->
+  <div id="modal-pin" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border w-full max-w-sm p-6 relative">
+      <button onclick="closeModal('modal-pin')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold mb-1">Alterar PIN</h3>
+      <p id="pin-alvo" class="text-xs text-slate-500 mb-4"></p>
+      <form onsubmit="savePin(event)" class="space-y-4">
+        <input type="hidden" id="pin-user-id">
+        <div id="pin-atual-box">
+          <label class="block text-xs font-bold uppercase mb-1">PIN atual *</label>
+          <input type="password" id="pin-atual" inputmode="numeric" autocomplete="current-password" class="w-full px-3 py-2 border rounded-xl text-center">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Novo PIN (4 a 8 números) *</label>
+          <input type="password" id="pin-novo" required inputmode="numeric" pattern="\d{4,8}" autocomplete="new-password" class="w-full px-3 py-2 border rounded-xl text-center">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Confirme o novo PIN *</label>
+          <input type="password" id="pin-novo2" required inputmode="numeric" pattern="\d{4,8}" autocomplete="new-password" class="w-full px-3 py-2 border rounded-xl text-center">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-brand-600 text-white font-bold rounded-xl text-xs uppercase">SALVAR NOVO PIN</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TURMA -->
+  <div id="modal-turma" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border w-full max-w-md p-6 relative">
+      <button onclick="closeModal('modal-turma')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold mb-4">Turma</h3>
+      <form onsubmit="saveTurmaForm(event)" class="space-y-4">
+        <input type="hidden" id="turma-id">
+        <div><label class="block text-xs font-bold uppercase mb-1">Nome da Turma *</label><input type="text" id="turma-nome" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold uppercase mb-1">Dia *</label>
+            <select id="turma-dia" required class="w-full px-3 py-2 border rounded-xl text-xs bg-white">
+              <option value="">SELECIONE</option>
+              <option>SEGUNDA-FEIRA</option><option>TERÇA-FEIRA</option><option>QUARTA-FEIRA</option><option>QUINTA-FEIRA</option><option>SEXTA-FEIRA</option><option>SÁBADO</option><option>DOMINGO</option>
+            </select>
+          </div>
+          <div><label class="block text-xs font-bold uppercase mb-1">Início (aula de 1h) *</label><input type="time" id="turma-hora" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Professor *</label>
+          <select id="turma-prof" required class="w-full px-3 py-2 border rounded-xl text-xs bg-white"></select>
+          <p class="text-[10px] text-slate-500 mt-1">A lista mostra os usuários marcados como PROFESSOR em Gestão de Usuários.</p>
+        </div>
+        <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="turma-ativa" checked> Turma ativa (aparece no formulário de inscrição)</label>
+        <button type="submit" class="w-full py-2.5 bg-brand-600 text-white font-bold rounded-xl text-xs uppercase">SALVAR</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: AULA -->
+  <div id="modal-aula" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border w-full max-w-md p-6 relative">
+      <button onclick="closeModal('modal-aula')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold mb-4">Aula do Cronograma</h3>
+      <form onsubmit="saveAulaForm(event)" class="space-y-4">
+        <input type="hidden" id="aula-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold uppercase mb-1">Nº da Aula *</label><input type="number" id="aula-numero" min="1" max="99" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+          <div><label class="block text-xs font-bold uppercase mb-1">Data *</label><input type="date" id="aula-data" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+        </div>
+        <div><label class="block text-xs font-bold uppercase mb-1">Título / Tópico *</label><input type="text" id="aula-titulo" required class="w-full px-3 py-2 border rounded-xl text-xs"></div>
+        <div><label class="block text-xs font-bold uppercase mb-1">Tarefa / Microdesafio</label><textarea id="aula-tarefa" rows="3" class="w-full px-3 py-2 border rounded-xl text-xs"></textarea></div>
+        <button type="submit" class="w-full py-2.5 bg-brand-600 text-white font-bold rounded-xl text-xs uppercase">SALVAR</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PROMOVER CANDIDATO -->
+  <div id="modal-promover" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border w-full max-w-md p-6 relative">
+      <button onclick="closeModal('modal-promover')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold mb-1">Promover a Aluno</h3>
+      <p id="promover-nome" class="text-xs text-slate-500 mb-4"></p>
+      <form onsubmit="confirmarPromocao(event)" class="space-y-4">
+        <input type="hidden" id="promover-id">
+        <div>
+          <label class="block text-xs font-bold uppercase mb-1">Turma definitiva do aluno *</label>
+          <select id="promover-turma" required class="w-full px-3 py-2 border rounded-xl text-xs bg-white"></select>
+          <p class="text-[10px] text-slate-500 mt-1">As opções escolhidas pelo candidato aparecem primeiro.</p>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs uppercase"><i class="fa-solid fa-user-check"></i> CONFIRMAR PROMOÇÃO</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl text-white font-bold text-xs flex items-center gap-2 transform translate-y-20 opacity-0 transition-all">
+    <span id="toast-msg"></span>
+  </div>
+
+  <script>
+    // === URL DA IMPLANTAÇÃO DO APPS SCRIPT ===
+    const API_URL = "https://script.google.com/macros/s/AKfycbyz-5BH6yq-HL32700QOdk-Yx4oIGCvZ2wm6fu0BWZYFr6ZiDNinyFOStz4Ag2mJG6B5g/exec";
+
+    let currentUser = null;
+    let sessionToken = null;
+    let globalData = {};
+    const PERMS = ['candidatos','alunos','doacoes','turmas','cronograma','frequencia','graficos','usuarios'];
+
+    function showLoading(show) { document.body.classList.toggle('loading', show); }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    const $ = id => document.getElementById(id);
+
+    // Escapa texto vindo da planilha (o formulário público é aberto a qualquer pessoa)
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+    function fmtData(v) {
+      if (!v) return '---';
+      const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/);
+      return m ? `${m[3]}/${m[2]}/${m[1]}${m[4] ? ' ' + m[4].trim().substring(0,5) : ''}` : esc(v);
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = $('toast');
+      toast.className = `fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl text-white font-bold text-xs flex items-center gap-2 transform transition-all ${type === 'error' ? 'bg-red-600' : 'bg-emerald-600'} translate-y-0 opacity-100`;
+      $('toast-msg').innerText = msg;
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 4000);
+    }
+
+    /**
+     * Chamada à API. Lança erro quando o script responde {error} ou a rede falha,
+     * para que nenhuma tela mostre "salvo" sem ter salvo.
+     */
+    async function apiCall(action, payload = {}) {
+      let res;
+      try {
+        res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+          body: JSON.stringify({ action, token: sessionToken, ...payload })
+        });
+      } catch (e) {
+        throw new Error('Falha de conexão com o servidor.');
+      }
+      let data;
+      try { data = await res.json(); }
+      catch (e) { throw new Error('Resposta inválida do servidor. Verifique se a implantação do script está atualizada e com acesso "Qualquer pessoa".'); }
+      if (data && data.error) {
+        if (data.authError) forceRelogin();
+        throw new Error(data.error);
+      }
+      return data;
+    }
+
+    /* === PROTEÇÃO CONTRA CLIQUES REPETIDOS ===
+     * - Enquanto uma ação está em andamento, novas ações são ignoradas.
+     * - Depois que termina, há um intervalo curto (COOLDOWN_MS) em que novos cliques também são ignorados,
+     *   evitando o "duplo clique" que dispara a mesma gravação duas vezes.
+     */
+    const COOLDOWN_MS = 800;
+    let busy = false, lastActionEnd = 0;
+    function isBusy() { return busy || (Date.now() - lastActionEnd < COOLDOWN_MS); }
+
+    // Executa uma ação com loader + toast de erro
+    async function run(fn, okMsg) {
+      if (isBusy()) return false;
+      busy = true;
+      showLoading(true);
+      try {
+        await fn();
+        if (okMsg) showToast(okMsg);
+        return true;
+      } catch (err) {
+        showToast(err.message, 'error');
+        return false;
+      } finally {
+        busy = false;
+        lastActionEnd = Date.now();
+        showLoading(false);
+      }
+    }
+
+    // Bloqueia também o envio por duplo clique/Enter em qualquer formulário do painel
+    document.addEventListener('submit', e => { if (isBusy()) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+
+    // ID gerado no navegador para registros novos: se o clique chegar duas vezes ao servidor, vira atualização e não duplica
+    function novoId() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)); }
+
+    function can(perm) { return currentUser && (currentUser.isSuper || !!currentUser.permissions[perm]); }
+
+    /* === LOGIN === */
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const login = $('login-username').value.toUpperCase().trim();
+      const pin = $('login-pin').value.trim();
+      await run(async () => {
+        const r = await apiCall('login', { login, pin });
+        if (!r.success) throw new Error('Usuário ou PIN incorretos.');
+        sessionToken = r.token;
+        currentUser = r.user;
+        sessionStorage.setItem('esp_token', sessionToken);
+        await enterPanel();
+      });
+      $('login-pin').value = '';
+    }
+
+    async function enterPanel() {
+      await loadDashboardData();
+      $('adm-user-badge').innerText = `${currentUser.nome} (${currentUser.cargo})`;
+      closeModal('modal-login');
+      $('admin-section').classList.remove('hidden');
+      renderAdminTabs();
+    }
+
+    // Reaproveita a sessão ao recarregar a página (mesma aba)
+    window.addEventListener('load', async () => {
+      const t = sessionStorage.getItem('esp_token');
+      if (!t) return;
+      sessionToken = t;
+      showLoading(true);
+      try { await enterPanel(); } catch (e) { forceRelogin(); }
+      showLoading(false);
+    });
+
+    function forceRelogin() {
+      sessionToken = null; currentUser = null;
+      sessionStorage.removeItem('esp_token');
+      $('admin-section').classList.add('hidden');
+      openModal('modal-login');
+    }
+
+    async function logoutAdmin() {
+      try { await apiCall('logout'); } catch (e) {}
+      forceRelogin();
+    }
+
+    let lastSnapshot = '', lastFetch = 0, refreshing = false, activeTab = null;
+    const REFRESH_MIN_MS = 3000; // não consulta o servidor mais de uma vez a cada 3s ao trocar de guia
+
+    let reqSeq = 0, reqApplied = 0;
+    async function loadDashboardData() {
+      const meu = ++reqSeq;
+      const data = await apiCall('getDashboardData');
+      if (meu < reqApplied) return false; // resposta antiga chegou depois de uma mais nova: descarta
+      reqApplied = meu;
+      const snap = JSON.stringify(data);
+      const changed = snap !== lastSnapshot;
+      lastSnapshot = snap;
+      globalData = data;
+      currentUser = data.user;
+      lastFetch = Date.now();
+      setSyncStatus('ok');
+      return changed;
+    }
+
+    function setSyncStatus(st) {
+      const el = $('sync-status'), ic = $('sync-icon');
+      if (ic) ic.classList.toggle('fa-spin', st === 'loading');
+      if (!el) return;
+      if (st === 'loading') el.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> verificando dados novos...';
+      else if (st === 'error') el.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i> <span class="text-red-500">falha ao atualizar</span>';
+      else el.textContent = 'Atualizado às ' + new Date(lastFetch).toLocaleTimeString('pt-BR');
+    }
+
+    /**
+     * Busca dados novos sem travar a tela. Se algo mudou, redesenha a guia aberta.
+     * force=true ignora o intervalo mínimo (botão "Atualizar").
+     */
+    async function refreshData(force = false) {
+      if (!sessionToken || refreshing || busy) return;
+      if (!force && Date.now() - lastFetch < REFRESH_MIN_MS) return;
+      refreshing = true;
+      setSyncStatus('loading');
+      try {
+        const changed = await loadDashboardData();
+        if (changed) {
+          const tabsAntes = $('admin-tabs').dataset.sig;
+          if (tabSignature() !== tabsAntes) renderAdminTabs(activeTab); // permissões mudaram
+          else renderActiveTab(true);
+          if (force) showToast('Dados atualizados.');
+        } else if (force) {
+          showToast('Nenhum dado novo.');
+        }
+      } catch (e) {
+        setSyncStatus('error');
+        if (force) showToast(e.message, 'error');
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    // Atualiza também quando a janela volta a ficar visível
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshData(); });
+
+    async function reload(renderFn) {
+      await loadDashboardData();
+      if (renderFn) renderFn();
+    }
+
+    /* === TABS === */
+    function tabDefs() {
+      return [
+        { id: 'candidatos', label: 'Lista de Candidatos', icon: 'fa-user-clock', ok: can('candidatos') },
+        { id: 'alunos', label: 'Lista de Alunos', icon: 'fa-user-graduate', ok: can('alunos') },
+        { id: 'doacoes', label: 'Monitoramento Doações', icon: 'fa-hand-holding-dollar', ok: can('doacoes') || currentUser.isProfessor },
+        { id: 'turmas', label: 'Gestão de Turmas', icon: 'fa-chalkboard-user', ok: can('turmas') },
+        { id: 'cronograma', label: 'Agenda & Cronograma', icon: 'fa-calendar-days', ok: can('cronograma') },
+        { id: 'frequencia', label: 'Frequência & Tarefas', icon: 'fa-clipboard-check', ok: can('frequencia') },
+        { id: 'usuarios', label: 'Gestão de Usuários ADM', icon: 'fa-user-gear', ok: can('usuarios') }
+      ].filter(t => t.ok);
+    }
+    function tabSignature() { return tabDefs().map(t => t.id).join(','); }
+
+    function renderAdminTabs(preferida = null) {
+      const tabs = $('admin-tabs');
+      const defs = tabDefs();
+      tabs.dataset.sig = tabSignature();
+      tabs.innerHTML = defs.map(t => `
+          <button onclick="switchAdminTab('${t.id}')" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200" data-tab="${t.id}">
+            <i class="fa-solid ${t.icon}"></i> ${t.label}
+          </button>`).join('');
+      if (!defs.length) {
+        document.querySelectorAll('.admin-tab-content').forEach(e => e.classList.add('hidden'));
+        tabs.innerHTML = '<span class="text-xs text-slate-500">Seu usuário não possui nenhuma permissão. Fale com o administrador.</span>';
+        return;
+      }
+      const alvo = defs.some(t => t.id === preferida) ? preferida : defs[0].id;
+      showTab(alvo);
+    }
+
+    // Clique na guia: mostra na hora o que já está carregado e busca dados novos em segundo plano
+    function switchAdminTab(id) {
+      showTab(id);
+      refreshData();
+    }
+
+    function showTab(id) {
+      activeTab = id;
+      document.querySelectorAll('.admin-tab-content').forEach(e => e.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = btn.dataset.tab === id
+          ? 'tab-btn px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 bg-brand-600 text-white shadow-md'
+          : 'tab-btn px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200';
+      });
+      $(`tab-${id}`).classList.remove('hidden');
+      renderActiveTab(false);
+    }
+
+    function renderActiveTab(fromRefresh) {
+      const fn = ({ candidatos: renderCandidatos, alunos: renderAlunos, doacoes: renderDoacoes, turmas: renderTurmas,
+                    cronograma: renderCronograma, frequencia: initFrequencia, usuarios: renderUsuarios })[activeTab];
+      if (!fn) return;
+      // Não apaga uma chamada de frequência que está sendo preenchida
+      if (fromRefresh && activeTab === 'frequencia' && freqDirty) {
+        showToast('Há dados novos. Salve a frequência e clique em Atualizar para vê-los.');
+        return;
+      }
+      fn();
+    }
+
+    /* === CANDIDATOS === */
+    function renderCandidatos() {
+      $('tbl-candidatos-body').innerHTML = (globalData.candidatos || []).map(c => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3"><span class="font-bold">${esc(c.Nome)}</span><br><span class="text-[10px] text-slate-500">${esc(c.Telefone)} · ${esc(c.Cargo)}</span></td>
+          <td class="p-3">${esc(c.Cidade)}-${esc(c.Estado)}<br><span class="text-[10px] text-slate-500">${esc(c.Comum)}</span></td>
+          <td class="p-3 text-xs">${[c.TurmaNome, c.TurmaNome2, c.TurmaNome3].map((n, i) => n ? `<div><span class="font-bold text-brand-600">${i + 1}ª</span> ${esc(n)}</div>` : '').join('') || '-'}
+            <span class="text-[10px] text-slate-500">${esc(c.PagamentoOpcao)} · 1º pgto: ${fmtData(c.DataPrevista)}</span></td>
+          <td class="p-3 text-center"><button onclick="promoverCandidato('${esc(c.ID)}')" class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded font-bold text-xs">Promover a Aluno</button></td>
+        </tr>`).join('') || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Nenhum candidato pendente.</td></tr>`;
+    }
+
+    function promoverCandidato(id) {
+      if (isBusy()) return;
+      const c = (globalData.candidatos || []).find(x => String(x.ID) === String(id));
+      if (!c) return showToast('Candidato não encontrado. Clique em Atualizar.', 'error');
+      const escolhidas = [c.TurmaID, c.TurmaID2, c.TurmaID3].filter(Boolean).map(String);
+      const turmas = globalData.turmas || [];
+      const nome = t => `${esc(t.Nome)} (${esc(t.Dia)} ${esc(t.HoraInicio)})`;
+      const pref = escolhidas.map((tid, i) => {
+        const t = turmas.find(x => String(x.ID) === tid);
+        return t ? `<option value="${esc(t.ID)}">${i + 1}ª OPÇÃO: ${nome(t)}</option>` : '';
+      }).join('');
+      const outras = turmas.filter(t => !escolhidas.includes(String(t.ID)) && String(t.Ativa) !== 'NÃO')
+        .map(t => `<option value="${esc(t.ID)}">${nome(t)}</option>`).join('');
+      $('promover-turma').innerHTML = pref + (outras ? `<optgroup label="Outras turmas">${outras}</optgroup>` : '');
+      $('promover-id').value = c.ID;
+      $('promover-nome').innerText = c.Nome;
+      openModal('modal-promover');
+    }
+
+    async function confirmarPromocao(e) {
+      e.preventDefault();
+      const candidatoId = $('promover-id').value, turmaId = $('promover-turma').value;
+      if (!turmaId) return showToast('Selecione a turma.', 'error');
+      const ok = await run(async () => {
+        await apiCall('promoverCandidato', { candidatoId, turmaId });
+        await reload(renderCandidatos);
+      }, "Aluno promovido com sucesso!");
+      if (ok) closeModal('modal-promover');
+    }
+
+    /* === ALUNOS === */
+    function renderAlunos() {
+      $('tbl-alunos-body').innerHTML = (globalData.alunos || []).map(a => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3"><span class="font-bold">${esc(a.Nome)}</span><br><span class="text-[10px] text-slate-500">${esc(a.Telefone)} · ${esc(a.Cidade)}-${esc(a.Estado)}</span></td>
+          <td class="p-3">${esc(a.TurmaNome || '-')}</td>
+          <td class="p-3 text-xs"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">${esc(a.Status)}</span><br><span class="text-[10px] text-slate-400">${fmtData(a.DataInclusao)} por ${esc(a.UsuarioInclusao)}</span></td>
+          <td class="p-3 text-center">-</td>
+        </tr>`).join('') || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Nenhum aluno.</td></tr>`;
+    }
+
+    /* === DOAÇÕES === */
+    function renderDoacoes() {
+      const ro = !!globalData.doacoesSomenteLeitura;
+      $('tbl-doacoes-body').innerHTML = (globalData.doacoes || []).map(d => {
+        const aluno = (globalData.alunos || []).find(a => String(a.ID) === String(d.AlunoID));
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3"><span class="font-bold">${esc(aluno ? aluno.Nome : 'Desconhecido')}</span><br><span class="text-[10px] text-slate-500">${esc(d.PagamentoOpcao)} · Prof: ${esc(d.ProfessorRecebedor || '-')}</span></td>
+            <td class="p-3 text-xs">Prev: ${fmtData(d.DataPrevista)}<br>Efet: <span class="font-bold text-brand-600">${fmtData(d.DataEfetiva)}</span></td>
+            <td class="p-3 font-bold">${esc(d.Status)}</td>
+            <td class="p-3 text-[10px] text-slate-500">${esc(d.UsuarioRegistro || '-')}</td>
+            <td class="p-3 text-center">${ro ? '<span class="text-[10px] text-slate-400">Somente leitura</span>' : `<button onclick="openDoacao('${esc(d.ID)}')" class="px-2 py-1 bg-slate-200 rounded font-bold text-xs">Editar</button>`}</td>
+          </tr>`;
+      }).join('') || `<tr><td colspan="5" class="p-4 text-center text-slate-400">Sem dados.</td></tr>`;
+    }
+
+    function openDoacao(id) {
+      const d = globalData.doacoes.find(x => String(x.ID) === String(id));
+      $('edit-doacao-id').value = d.ID;
+      $('edit-doacao-status').value = d.Status;
+      $('edit-doacao-dataprev').value = String(d.DataPrevista || '').substring(0, 10);
+      $('edit-doacao-dataefet').value = String(d.DataEfetiva || '').substring(0, 10);
+      const sel = $('edit-doacao-prof');
+      sel.innerHTML = '<option value="">NÃO SELECIONADO</option>' + professores().map(p =>
+        `<option value="${esc(p.Nome)}" ${p.Nome === d.ProfessorRecebedor ? 'selected' : ''}>${esc(p.Nome)}</option>`).join('');
+      openModal('modal-edit-doacao');
+    }
+
+    async function saveDoacaoEdit(e) {
+      e.preventDefault();
+      const payload = {
+        ID: $('edit-doacao-id').value,
+        Status: $('edit-doacao-status').value,
+        DataPrevista: $('edit-doacao-dataprev').value,
+        DataEfetiva: $('edit-doacao-dataefet').value,
+        ProfessorRecebedor: $('edit-doacao-prof').value
+      };
+      const ok = await run(async () => {
+        await apiCall('saveDoacao', { doacaoData: payload });
+        await reload(renderDoacoes);
+      }, "Doação atualizada.");
+      if (ok) closeModal('modal-edit-doacao');
+    }
+
+    /* === TURMAS === */
+    function professores() { return (globalData.usuarios || []).filter(u => u.IsProfessor === 'SIM'); }
+
+    function renderTurmas() {
+      $('cards-turmas-container').innerHTML = (globalData.turmas || []).map(t => {
+        const qtd = (globalData.alunos || []).filter(a => String(a.TurmaID) === String(t.ID)).length;
+        const inativa = String(t.Ativa) === 'NÃO';
+        return `
+          <div class="border rounded-2xl p-4 ${inativa ? 'bg-slate-50 opacity-70' : 'bg-white'}">
+            <div class="flex justify-between items-start gap-2">
+              <h4 class="font-bold text-sm text-slate-900">${esc(t.Nome)}</h4>
+              ${inativa ? '<span class="text-[10px] px-2 py-0.5 bg-slate-200 rounded font-bold">INATIVA</span>' : ''}
+            </div>
+            <p class="text-xs text-slate-600 mt-2"><i class="fa-regular fa-clock"></i> ${esc(t.Dia)} · ${esc(t.HoraInicio)} (1h)</p>
+            <p class="text-xs text-slate-600"><i class="fa-solid fa-chalkboard-user"></i> ${esc(t.ProfessorNome || 'Sem professor')}</p>
+            <p class="text-xs text-slate-600"><i class="fa-solid fa-users"></i> ${qtd} aluno(s)</p>
+            <div class="flex gap-2 mt-3">
+              <button onclick="openTurmaModal('${esc(t.ID)}')" class="px-3 py-1 bg-slate-200 rounded font-bold text-xs">Editar</button>
+              <button onclick="deleteTurma('${esc(t.ID)}')" class="px-3 py-1 bg-red-50 text-red-600 rounded font-bold text-xs">Excluir</button>
+            </div>
+          </div>`;
+      }).join('') || '<p class="text-xs text-slate-400">Nenhuma turma cadastrada. As turmas aparecem como opção de horário no formulário de inscrição.</p>';
+    }
+
+    function openTurmaModal(id = null) {
+      const t = id ? globalData.turmas.find(x => String(x.ID) === String(id)) : {};
+      $('turma-id').value = t.ID || novoId();
+      $('turma-nome').value = t.Nome || '';
+      $('turma-dia').value = t.Dia || '';
+      $('turma-hora').value = String(t.HoraInicio || '').substring(0, 5);
+      $('turma-ativa').checked = String(t.Ativa || 'SIM') !== 'NÃO';
+      $('turma-prof').innerHTML = '<option value="">SELECIONE O PROFESSOR</option>' + professores().map(p =>
+        `<option value="${esc(p.ID)}" ${String(p.ID) === String(t.ProfessorID) ? 'selected' : ''}>${esc(p.Nome)}</option>`).join('');
+      openModal('modal-turma');
+    }
+
+    async function saveTurmaForm(e) {
+      e.preventDefault();
+      const profSel = $('turma-prof');
+      const turma = {
+        ID: $('turma-id').value,
+        Nome: $('turma-nome').value.toUpperCase().trim(),
+        Dia: $('turma-dia').value,
+        HoraInicio: $('turma-hora').value,
+        ProfessorID: profSel.value,
+        ProfessorNome: profSel.value ? profSel.options[profSel.selectedIndex].text : '',
+        Ativa: $('turma-ativa').checked ? 'SIM' : 'NÃO'
+      };
+      const ok = await run(async () => {
+        await apiCall('saveTurma', { turma });
+        await reload(renderTurmas);
+      }, 'Turma salva.');
+      if (ok) closeModal('modal-turma');
+    }
+
+    async function deleteTurma(id) {
+      if (isBusy()) return;
+      const qtd = (globalData.alunos || []).filter(a => String(a.TurmaID) === String(id)).length;
+      if (qtd && !confirm(`Esta turma tem ${qtd} aluno(s) vinculados. Prefira marcá-la como INATIVA. Excluir mesmo assim?`)) return;
+      if (!qtd && !confirm('Excluir esta turma?')) return;
+      await run(async () => {
+        await apiCall('deleteTurma', { id });
+        await reload(renderTurmas);
+      }, 'Turma excluída.');
+    }
+
+    /* === AGENDA / CRONOGRAMA === */
+    function agendaOrdenada() {
+      return [...(globalData.agenda || [])].sort((a, b) => Number(a.NumeroAula) - Number(b.NumeroAula));
+    }
+
+    function renderCronograma() {
+      $('tbl-cronograma-body').innerHTML = agendaOrdenada().map(a => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3"><span class="font-bold">Aula ${esc(a.NumeroAula)}</span><br><span class="text-[10px] text-slate-500">${fmtData(a.Data)}</span></td>
+          <td class="p-3">${esc(a.Titulo)}</td>
+          <td class="p-3">${esc(a.Tarefa || '-')}</td>
+          <td class="p-3 text-center whitespace-nowrap">
+            <button onclick="openCronogramaModal('${esc(a.ID)}')" class="px-2 py-1 bg-slate-200 rounded font-bold text-xs">Editar</button>
+            <button onclick="deleteAula('${esc(a.ID)}')" class="px-2 py-1 bg-red-50 text-red-600 rounded font-bold text-xs">Excluir</button>
+          </td>
+        </tr>`).join('') || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Nenhuma aula cadastrada.</td></tr>`;
+    }
+
+    function openCronogramaModal(id = null) {
+      const a = id ? globalData.agenda.find(x => String(x.ID) === String(id)) : {};
+      const prox = agendaOrdenada().reduce((m, x) => Math.max(m, Number(x.NumeroAula) || 0), 0) + 1;
+      $('aula-id').value = a.ID || novoId();
+      $('aula-numero').value = a.NumeroAula || prox;
+      $('aula-data').value = String(a.Data || '').substring(0, 10);
+      $('aula-titulo').value = a.Titulo || '';
+      $('aula-tarefa').value = a.Tarefa || '';
+      openModal('modal-aula');
+    }
+
+    async function saveAulaForm(e) {
+      e.preventDefault();
+      const aula = {
+        ID: $('aula-id').value,
+        NumeroAula: $('aula-numero').value,
+        Data: $('aula-data').value,
+        Titulo: $('aula-titulo').value.toUpperCase().trim(),
+        Tarefa: $('aula-tarefa').value.toUpperCase().trim()
+      };
+      const ok = await run(async () => {
+        await apiCall('saveAgenda', { aula });
+        await reload(renderCronograma);
+      }, 'Aula salva.');
+      if (ok) closeModal('modal-aula');
+    }
+
+    async function deleteAula(id) {
+      if (isBusy()) return;
+      if (!confirm('Excluir esta aula do cronograma?')) return;
+      await run(async () => {
+        await apiCall('deleteAgenda', { id });
+        await reload(renderCronograma);
+      }, 'Aula excluída.');
+    }
+
+    /* === FREQUÊNCIA & TAREFAS === */
+    function turmasVisiveis() {
+      const ts = globalData.turmas || [];
+      // Professor sem permissão de turmas vê só as turmas dele
+      if (currentUser.isProfessor && !currentUser.isSuper && !can('turmas')) return ts.filter(t => String(t.ProfessorID) === String(currentUser.id));
+      return ts;
+    }
+
+    function initFrequencia() {
+      const st = $('freq-select-turma'), sa = $('freq-select-aula');
+      const tv = st.value, av = sa.value;
+      st.innerHTML = '<option value="">SELECIONE</option>' + turmasVisiveis().map(t => `<option value="${esc(t.ID)}">${esc(t.Nome)}</option>`).join('');
+      sa.innerHTML = '<option value="">SELECIONE</option>' + agendaOrdenada().map(a => `<option value="${esc(a.ID)}">AULA ${esc(a.NumeroAula)} - ${esc(a.Titulo)}</option>`).join('');
+      st.value = tv; sa.value = av;
+      renderFrequenciaGrid();
+    }
+
+    let freqDirty = false;
+    // Pergunta antes de trocar turma/aula com chamada não salva
+    function trocarSelecaoFreq(sel) {
+      if (freqDirty && !confirm('Há alterações não salvas nesta chamada. Descartar?')) {
+        sel.value = sel.dataset.prev || '';
+        return;
+      }
+      renderFrequenciaGrid();
+    }
+    function renderFrequenciaGrid() {
+      freqDirty = false;
+      ['freq-select-turma','freq-select-aula'].forEach(i => $(i).dataset.prev = $(i).value);
+      const turmaId = $('freq-select-turma').value, aulaId = $('freq-select-aula').value;
+      const box = $('freq-grid-container');
+      if (!turmaId || !aulaId) { box.classList.add('hidden'); return; }
+      const alunos = (globalData.alunos || []).filter(a => String(a.TurmaID) === String(turmaId) && a.Status !== 'INATIVO');
+      const regs = (globalData.frequencia || []).filter(f => String(f.TurmaID) === String(turmaId) && String(f.AulaID) === String(aulaId));
+      $('tbl-frequencia-body').innerHTML = alunos.map(a => {
+        const r = regs.find(f => String(f.AlunoID) === String(a.ID)) || {};
+        const tarefa = r.Tarefa || 'PENDENTE';
+        return `
+          <tr data-aluno="${esc(a.ID)}">
+            <td class="p-3 font-bold">${esc(a.Nome)}</td>
+            <td class="p-3 text-center"><input type="checkbox" class="freq-presenca w-4 h-4" onchange="freqDirty=true" ${r.Presenca === 'PRESENTE' ? 'checked' : ''}></td>
+            <td class="p-3 text-center">
+              <select class="freq-tarefa px-2 py-1 border rounded text-xs" onchange="freqDirty=true">
+                ${['PENDENTE','ENTREGUE','PARCIAL','NÃO ENTREGUE'].map(o => `<option ${o === tarefa ? 'selected' : ''}>${o}</option>`).join('')}
+              </select>
+            </td>
+            <td class="p-3"><input type="text" class="freq-obs w-full px-2 py-1 border rounded text-xs" oninput="freqDirty=true" value="${esc(r.Obs || '')}"></td>
+          </tr>`;
+      }).join('') || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Nenhum aluno nesta turma.</td></tr>`;
+      box.classList.remove('hidden');
+    }
+
+    async function saveFrequenciaRecords() {
+      const TurmaID = $('freq-select-turma').value, AulaID = $('freq-select-aula').value;
+      const records = [...document.querySelectorAll('#tbl-frequencia-body tr[data-aluno]')].map(tr => ({
+        TurmaID, AulaID,
+        AlunoID: tr.dataset.aluno,
+        Presenca: tr.querySelector('.freq-presenca').checked ? 'PRESENTE' : 'FALTA',
+        Tarefa: tr.querySelector('.freq-tarefa').value,
+        Obs: tr.querySelector('.freq-obs').value.toUpperCase().trim()
+      }));
+      if (!records.length) return showToast('Nenhum aluno para salvar.', 'error');
+      await run(async () => {
+        await apiCall('saveFrequencia', { records });
+        await reload(renderFrequenciaGrid);
+      }, 'Frequência salva.');
+    }
+
+    /* === USUÁRIOS === */
+    function renderUsuarios() {
+      $('tbl-usuarios-body').innerHTML = (globalData.usuarios || []).map(u => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 font-bold">${esc(u.Nome)}</td>
+          <td class="p-3">${esc(u.Login)}</td>
+          <td class="p-3">${esc(u.Cargo)} ${u.IsProfessor === 'SIM' ? '<span class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">PROF</span>' : ''}</td>
+          <td class="p-3 text-xs">${u.Ativo === 'NÃO' ? '<span class="text-red-600 font-bold">INATIVO</span>' : '<span class="text-emerald-700 font-bold">ATIVO</span>'}</td>
+          <td class="p-3 text-center whitespace-nowrap">
+            <button onclick="openUsuarioModal('${esc(u.ID)}')" class="px-2 py-1 bg-slate-200 rounded font-bold text-xs">Editar</button>
+            ${u.Login !== 'ADM123' && String(u.ID) !== String(currentUser.id) ? `<button onclick="openPinModal('${esc(u.ID)}')" class="px-2 py-1 bg-amber-50 text-amber-700 rounded font-bold text-xs">Redefinir PIN</button>` : ''}
+          </td>
+        </tr>`).join('') || `<tr><td colspan="5" class="p-4 text-center text-slate-400">Nenhum usuário.</td></tr>`;
+    }
+
+    function openUsuarioModal(id = null) {
+      const u = id ? globalData.usuarios.find(x => String(x.ID) === String(id)) : null;
+      $('user-id').value = id || '';
+      $('pwd-lbl').innerText = id ? '(em branco = manter)' : '(obrigatório)';
+      $('user-pin').required = !id;
+      $('user-pin').value = '';
+      $('user-nome').value = u ? u.Nome : '';
+      $('user-login').value = u ? u.Login : '';
+      $('user-login').readOnly = !!(u && u.Login === 'ADM123');
+      $('user-cargo').value = u ? u.Cargo : '';
+      $('user-is-prof').checked = !!(u && u.IsProfessor === 'SIM');
+      $('user-ativo').checked = !u || u.Ativo !== 'NÃO';
+      let p = {};
+      if (u) { try { p = JSON.parse(u.Permissoes || '{}'); } catch (e) {} }
+      else PERMS.forEach(k => p[k] = k !== 'usuarios');
+      PERMS.forEach(k => {
+        const el = $(`perm-${k}`);
+        el.checked = !!p[k];
+        el.disabled = !can(k); // não concede o que não tem
+      });
+      $('btn-del-usuario').classList.toggle('hidden', !u || u.Login === 'ADM123' || String(u.ID) === String(currentUser.id));
+      openModal('modal-usuario');
+    }
+
+    async function saveUsuarioForm(e) {
+      e.preventDefault();
+      const pin = $('user-pin').value.trim();
+      if (pin && !/^\d{4,8}$/.test(pin)) return showToast('O PIN deve ter de 4 a 8 números.', 'error');
+      const p = {};
+      PERMS.forEach(k => p[k] = $(`perm-${k}`).checked);
+      const usuario = {
+        ID: $('user-id').value,
+        Nome: $('user-nome').value.toUpperCase().trim(),
+        Login: $('user-login').value.toUpperCase().trim(),
+        Cargo: $('user-cargo').value.toUpperCase().trim(),
+        IsProfessor: $('user-is-prof').checked ? 'SIM' : 'NÃO',
+        Ativo: $('user-ativo').checked ? 'SIM' : 'NÃO',
+        Permissoes: JSON.stringify(p)
+      };
+      if (pin) usuario.Pin = pin; // o hash é feito no servidor
+      const ok = await run(async () => {
+        await apiCall('saveUsuario', { usuario });
+        await reload(renderUsuarios);
+      }, 'Usuário salvo com sucesso!');
+      if (ok) closeModal('modal-usuario');
+    }
+
+    async function deleteUsuario() {
+      if (isBusy()) return;
+      const id = $('user-id').value;
+      if (!id || !confirm('Excluir este usuário? Para apenas bloquear o acesso, desmarque "Usuário ATIVO".')) return;
+      const ok = await run(async () => {
+        await apiCall('deleteUsuario', { id });
+        await reload(renderUsuarios);
+      }, 'Usuário excluído.');
+      if (ok) closeModal('modal-usuario');
+    }
+
+    /* === PIN === */
+    function openPinModal(userId = null) {
+      const proprio = !userId || String(userId) === String(currentUser.id);
+      const u = proprio ? null : globalData.usuarios.find(x => String(x.ID) === String(userId));
+      $('pin-user-id').value = proprio ? '' : userId;
+      $('pin-alvo').innerText = proprio ? `Usuário: ${currentUser.login}` : `Redefinindo o PIN de: ${u ? u.Nome + ' (' + u.Login + ')' : ''}`;
+      $('pin-atual-box').classList.toggle('hidden', !proprio);
+      $('pin-atual').required = proprio;
+      ['pin-atual','pin-novo','pin-novo2'].forEach(i => $(i).value = '');
+      openModal('modal-pin');
+    }
+
+    async function savePin(e) {
+      e.preventDefault();
+      const novo = $('pin-novo').value.trim();
+      if (!/^\d{4,8}$/.test(novo)) return showToast('O PIN deve ter de 4 a 8 números.', 'error');
+      if (novo !== $('pin-novo2').value.trim()) return showToast('A confirmação não confere.', 'error');
+      const ok = await run(() => apiCall('changePin', {
+        userId: $('pin-user-id').value || null,
+        pinAtual: $('pin-atual').value.trim(),
+        pinNovo: novo
+      }), 'PIN alterado com sucesso.');
+      if (ok) closeModal('modal-pin');
+    }
+  </script>
+</body>
+</html>
