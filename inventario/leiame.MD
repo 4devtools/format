@@ -1,4 +1,4 @@
-# Controle de Ativo Fixo — versão 2.0
+# Controle de Ativo Fixo — versão 2.0.3
 
 ## Como publicar
 1. Na pasta `inventario/` do repositório, substitua `index.html`, `sw.js` e `manifest.json` pelos novos.
