@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscrição - Curso de Espanhol</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#e11d48',
+              600: '#be123c',
+              700: '#9f1239',
+              800: '#881337',
+              900: '#4c0519',
+            },
+            accent: {
+              500: '#f59e0b',
+              600: '#d97706',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    input[type="text"], input.uppercase-input, textarea {
+      text-transform: uppercase;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-900 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-400 text-brand-900 font-black text-xl flex items-center justify-center shadow-inner">
+          É
+        </div>
+        <div>
+          <h1 class="text-lg font-bold leading-tight tracking-wide">CURSO DE ESPANHOL</h1>
+          <p class="text-xs text-amber-300 font-medium">Portal de Inscrição</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <section id="public-section" class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <!-- Banner Header -->
+        <div class="bg-gradient-to-r from-brand-800 to-brand-700 p-6 sm:p-8 text-white relative">
+          <span class="inline-block px-3 py-1 bg-amber-400 text-brand-900 font-bold text-xs uppercase tracking-wider rounded-full mb-2">Inscrições Abertas</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Ficha de Cadastro do Aluno</h2>
+          <p class="text-brand-100 text-sm mt-1 max-w-2xl">Preencha com atenção todos os campos abaixo para garantir sua vaga na nova turma do Curso de Espanhol.</p>
+        </div>
+
+        <!-- 1. MANDATORY TERMS & VIDEO -->
+        <div class="p-6 sm:p-8 border-b border-slate-200 bg-amber-50/50">
+          <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-file-contract text-brand-600"></i> Etapa 1: Termos Obrigatórios & Boas-Vindas
+          </h3>
+
+          <div class="space-y-4 text-xs sm:text-sm text-slate-700">
+            <!-- Term 1: LGPD -->
+            <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" id="term-lgpd" onchange="toggleFormUnlock()" class="mt-1 w-5 h-5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                <div class="space-y-2">
+                  <span class="font-bold text-slate-900 block">Termo LGPD e Isenção de Vínculo (Obrigatório)</span>
+                  <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                    <li>As informações fornecidas neste formulário serão utilizadas exclusivamente para finalidades de inscrição, organização, comunicação e participação no curso de espanhol.</li>
+                    <li>Tratamento de acordo com a Lei Federal nº 13.709/2018 (LGPD).</li>
+                    <li>Autorização específica para inclusão do número de telefone no grupo de WhatsApp do curso para comunicação, envio de materiais e recebimento de microdesafios para correção.</li>
+                    <li>Fornecimento de dados consciente e voluntário.</li>
+                  </ul>
+                  <div class="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-lg font-bold text-red-800 text-xs sm:text-sm">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> AVISO OBRIGATÓRIO: "O Curso proposto, ainda que ministrado por irmãos e destinado a irmandade, NÃO possui vínculo com a Congregação Cristã no Brasil."
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Term 2: Video -->
+            <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" id="term-video" onchange="toggleFormUnlock()" class="mt-1 w-5 h-5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                <div>
+                  <span class="font-bold text-slate-900 block">Confirmação do Vídeo de Boas-Vindas (Obrigatório)</span>
+                  <p class="text-slate-600 mt-1">
+                    Confirmo que assisti ao vídeo de boas-vindas, esclareci dúvidas com a coordenadora e estou de acordo com o funcionamento e orientações do curso.
+                  </p>
+                  <a href="https://www.youtube.com/watch?v=Mm1xRx01bhE" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition-colors">
+                    <i class="fa-brands fa-youtube text-base"></i> Assistir ao Vídeo no YouTube <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1"></i>
+                  </a>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div id="terms-alert" class="mt-4 p-3 bg-amber-100 border border-amber-300 rounded-xl text-amber-900 text-xs sm:text-sm flex items-center gap-2 font-medium">
+            <i class="fa-solid fa-lock text-amber-700 text-base"></i>
+            <span>Você precisa marcar as <strong>duas caixas de seleção acima</strong> para liberar o preenchimento do formulário.</span>
+          </div>
+        </div>
+
+        <!-- 2. REGISTRATION FORM FIELDS -->
+        <form id="student-reg-form" onsubmit="submitStudentForm(event)" class="p-6 sm:p-8 space-y-6 opacity-50 pointer-events-none transition-all duration-300">
+          <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-user-pen text-brand-600"></i> Etapa 2: Dados Pessoais & Inscrição
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Nome Completo -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nome Completo (Sem abreviar) *</label>
+              <input type="text" id="reg-nome" required placeholder="NOME COMPLETO DO ALUNO" oninput="this.value = this.value.toUpperCase()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 uppercase-input transition-all">
+            </div>
+
+            <!-- WhatsApp -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Telefone com DDD (WhatsApp) *</label>
+              <input type="text" id="reg-phone" required placeholder="(00) 00000-0000" oninput="formatPhoneMask(this)" maxlength="15" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all">
+            </div>
+
+            <!-- Estado (UF) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Estado (UF) *</label>
+              <select id="reg-uf" required onchange="onUfChange()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white transition-all">
+                <option value="">SELECIONE O ESTADO</option>
+              </select>
+            </div>
+
+            <!-- Cidade -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cidade *</label>
+              <select id="reg-cidade" required disabled class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white transition-all">
+                <option value="">SELECIONE PRIMEIRO O ESTADO</option>
+              </select>
+            </div>
+
+            <!-- Comum Congregação -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Comum Congregação *</label>
+              <input type="text" id="reg-comum" required placeholder="EX: CENTRAL - CIDADE" oninput="this.value = this.value.toUpperCase()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 uppercase-input transition-all">
+            </div>
+
+            <!-- Cargo ou Ministério -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cargo ou Ministério *</label>
+              <select id="reg-cargo" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white transition-all">
+                <option value="">SELECIONE O CARGO/MINISTÉRIO</option>
+                <option value="ANCIÃO">ANCIÃO</option>
+                <option value="DIÁCONO">DIÁCONO</option>
+                <option value="COOPERADOR DE OFÍCIO">COOPERADOR DE OFÍCIO</option>
+                <option value="COOPERADOR DE JOVENS E MENORES">COOPERADOR DE JOVENS E MENORES</option>
+                <option value="COLABORADORA DO EBI">COLABORADORA DO EBI</option>
+                <option value="MÚSICO / ORGANISTA">MÚSICO / ORGANISTA</option>
+                <option value="ATENDE REUNIÃO FAMILIARES / ENFERMOS / EVANGELIZAÇÃO">ATENDE REUNIÃO FAMILIARES / ENFERMOS / EVANGELIZAÇÃO</option>
+                <option value="OUTRO">OUTRO</option>
+              </select>
+            </div>
+
+            <!-- Regional com DAMIG -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Regional com DAMIG? *</label>
+              <select id="reg-damig" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white transition-all">
+                <option value="">SELECIONE UMA OPÇÃO</option>
+                <option value="SIM">SIM</option>
+                <option value="NÃO">NÃO</option>
+                <option value="NÃO SEI RESPONDER">NÃO SEI RESPONDER</option>
+              </select>
+            </div>
+
+            <!-- Opções de Horário de Aula (até 3 turmas) -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Opções de Horário de Aula / Turma * <span class="normal-case font-medium text-slate-500">(marque de 1 a 3, na ordem de preferência)</span></label>
+              <div id="reg-turmas-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <p class="text-xs text-slate-500">Carregando turmas...</p>
+              </div>
+              <p id="reg-turmas-info" class="text-xs text-slate-500 mt-2">Nenhuma turma marcada.</p>
+              <p class="text-xs text-slate-500 mt-1">* As turmas são ministradas online e têm duração exata de 1 hora por aula. A coordenação confirmará a turma definitiva.</p>
+            </div>
+
+          </div>
+
+          <!-- PAYMENT / DONATION SECTION -->
+          <div class="mt-8 pt-6 border-t border-slate-200 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+            <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Contribuição e Forma de Pagamento (Doação)
+            </h3>
+
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs sm:text-sm leading-relaxed mb-5 font-medium">
+              "Você deve fazer a sua doação por PIX diretamente para o professor da turma que escolheu, este valor servirá para viabilização do projeto. Terá um total aproximado de 38 aulas, durante aproximadamente 6 meses de curso, com diversas tarefas e atividades extra cursos com isso o valor da contribuição mínima será R$ 250,00 para o curso completo."
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Opção de Parcelamento *</label>
+                <select id="reg-pagamento-opcao" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white transition-all">
+                  <option value="À VISTA - R$ 250,00">À VISTA (R$ 250,00)</option>
+                  <option value="2X DE R$ 125,00">2X DE R$ 125,00 (TOTAL R$ 250,00)</option>
+                  <option value="3X DE R$ 83,33">3X DE R$ 83,33 (TOTAL R$ 250,00)</option>
+                  <option value="4X DE R$ 62,50">4X DE R$ 62,50 (TOTAL R$ 250,00)</option>
+                  <option value="5X DE R$ 50,00">5X DE R$ 50,00 (TOTAL R$ 250,00)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Data Prevista 1ª Parcela / Pagamento *</label>
+                <input type="date" id="reg-pagamento-data" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white transition-all">
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBMIT BUTTON -->
+          <div class="pt-4 flex justify-end">
+            <button type="submit" id="reg-submit-btn" disabled class="w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i> CONFIRMAR E ENVIAR INSCRIÇÃO
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- CUSTOM TOAST MESSAGE BOX -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl text-white font-bold text-xs sm:text-sm flex items-center gap-2 transform transition-all duration-300 translate-y-20 opacity-0">
+    <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+    <span id="toast-msg">Mensagem</span>
+  </div>
+
+  <script>
+    const BRAZIL_DATA = {
+      "SP": ["SÃO PAULO", "CAMPINAS", "GUARULHOS", "SÃO BERNARDO DO CAMPO", "SANTO ANDRÉ", "SÃO JOSÉ DOS CAMPOS", "SOROCABA", "RIBEIRÃO PRETO", "SANTOS", "DIADEMA"],
+      "RJ": ["RIO DE JANEIRO", "SÃO GONÇALO", "DUQUE DE CAXIAS", "NOVA IGUAÇU", "NITERÓI", "CAMPOS DOS GOYTACAZES", "PETRÓPOLIS"],
+      "MG": ["BELO HORIZONTE", "UBERLÂNDIA", "CONTAGEM", "JUIZ DE FORA", "BETIM", "MONTES CLAROS", "UBERABA"],
+      "PR": ["CURITIBA", "LONDRINA", "MARINGÁ", "PONTA GROSSA", "CASCAVEL", "SÃO JOSÉ DOS PINHAIS"],
+      "RS": ["PORTO ALEGRE", "CAXIAS DO SUL", "CANOAS", "PELOTAS", "SANTA MARIA"],
+      "BA": ["SALVADOR", "FEIRA DE SANTANA", "VITÓRIA DA CONQUISTA", "CAMAÇARI", "ITABUNA"],
+      "SC": ["FLORIANÓPOLIS", "JOINVILLE", "BLUMENAU", "SÃO JOSÉ", "CHAPECÓ"],
+      "PE": ["RECIFE", "JABOATÃO DOS GUARARAPES", "OLINDA", "CARUARU", "PETROLINA"],
+      "CE": ["FORTALEZA", "CAUCAIA", "JUAZEIRO DO NORTE", "SOBRAL"],
+      "GO": ["GOIÂNIA", "APARECIDA DE GOIÂNIA", "ANÁPOLIS", "RIO VERDE"],
+      "DF": ["BRASÍLIA"],
+      "ES": ["VITÓRIA", "VILA VELHA", "SERRA", "CARIACICA"],
+      "AM": ["MANAUS", "PARINTINS"],
+      "PA": ["BELÉM", "ANANINDEUA", "SANTARÉM"],
+      "MT": ["CUIABÁ", "VÁRZEA GRANDE", "RONDONÓPOLIS"],
+      "MS": ["CAMPO GRANDE", "DOURADOS"],
+      "RN": ["NATAL", "MOSSORÓ"],
+      "PB": ["JOÃO PESSOA", "CAMPINA GRANDE"],
+      "MA": ["SÃO LUÍS", "IMPERATRIZ"],
+      "AL": ["MACEIÓ", "ARAPIRACA"],
+      "PI": ["TERESINA", "PARNAÍBA"],
+      "SE": ["ARACAJU"],
+      "RO": ["PORTO VELHO"],
+      "TO": ["PALMAS"],
+      "AC": ["RIO BRANCO"],
+      "AP": ["MACAPÁ"],
+      "RR": ["BOA VISTA"]
+    };
+
+    // === URL DA IMPLANTAÇÃO DO APPS SCRIPT (a mesma do painel) ===
+    const API_URL = "https://script.google.com/macros/s/AKfycbyz-5BH6yq-HL32700QOdk-Yx4oIGCvZ2wm6fu0BWZYFr6ZiDNinyFOStz4Ag2mJG6B5g/exec";
+    let TURMAS = [];
+    const cacheCidades = {};
+
+    async function apiCall(action, payload = {}) {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...payload })
+      });
+      const data = await res.json();
+      if (data && data.error) throw new Error(data.error);
+      return data;
+    }
+
+    window.onload = function() {
+      populateUfDropdown();
+      populatePublicTurmasDropdown();
+      // data mínima = hoje
+      document.getElementById('reg-pagamento-data').min = new Date().toLocaleDateString('sv-SE');
+    };
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = msg;
+      if (type === 'error') {
+        toast.className = 'fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl text-white font-bold text-xs sm:text-sm flex items-center gap-2 transform transition-all duration-300 bg-red-600 translate-y-0 opacity-100';
+        toastIcon.className = 'fa-solid fa-triangle-exclamation';
+      } else {
+        toast.className = 'fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl text-white font-bold text-xs sm:text-sm flex items-center gap-2 transform transition-all duration-300 bg-emerald-600 translate-y-0 opacity-100';
+        toastIcon.className = 'fa-solid fa-circle-check';
+      }
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3500);
+    }
+
+    function formatPhoneMask(input) {
+      let v = input.value.replace(/\D/g, "");
+      v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+      v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+      input.value = v;
+    }
+
+    function populateUfDropdown() {
+      const ufSelect = document.getElementById('reg-uf');
+      ufSelect.innerHTML = '<option value="">SELECIONE O ESTADO</option>';
+      Object.keys(BRAZIL_DATA).sort().forEach(uf => {
+        const opt = document.createElement('option');
+        opt.value = uf;
+        opt.textContent = uf;
+        ufSelect.appendChild(opt);
+      });
+    }
+
+    async function onUfChange() {
+      const uf = document.getElementById('reg-uf').value;
+      const cidadeSelect = document.getElementById('reg-cidade');
+      cidadeSelect.disabled = true;
+      if (!uf) { cidadeSelect.innerHTML = '<option value="">SELECIONE PRIMEIRO O ESTADO</option>'; return; }
+      cidadeSelect.innerHTML = '<option value="">CARREGANDO CIDADES...</option>';
+
+      let cidades = cacheCidades[uf];
+      if (!cidades) {
+        try {
+          const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+          const lista = await r.json();
+          cidades = lista.map(c => c.nome.toUpperCase());
+        } catch (e) {
+          cidades = BRAZIL_DATA[uf] || []; // reserva se o IBGE estiver fora do ar
+        }
+        cacheCidades[uf] = cidades;
+      }
+      if (document.getElementById('reg-uf').value !== uf) return; // usuário trocou de UF no meio
+      cidadeSelect.innerHTML = '<option value="">SELECIONE A CIDADE</option>' +
+        cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+      cidadeSelect.disabled = false;
+    }
+
+    const MAX_TURMAS = 3;
+    let turmasMarcadas = []; // IDs na ordem em que foram marcados = ordem de preferência
+
+    async function populatePublicTurmasDropdown() {
+      const box = document.getElementById('reg-turmas-list');
+      try {
+        const r = await apiCall('getTurmasPublico');
+        TURMAS = r.turmas || [];
+        turmasMarcadas = [];
+        if (!TURMAS.length) {
+          box.innerHTML = '<p class="text-xs text-red-600 font-bold">Nenhuma turma disponível no momento.</p>';
+          return atualizarTurmasMarcadas();
+        }
+        box.innerHTML = TURMAS.map(t => `
+          <label data-turma="${escAttr(t.ID)}" class="turma-opt flex items-start gap-3 p-3 border border-slate-300 rounded-xl bg-white cursor-pointer hover:border-brand-500 transition-all">
+            <input type="checkbox" value="${escAttr(t.ID)}" onchange="onTurmaToggle(this)" class="mt-0.5 w-4 h-4 text-brand-600 rounded border-slate-300">
+            <span class="flex-1 text-xs">
+              <span class="block font-bold text-slate-800">${escAttr(t.Nome)}</span>
+              <span class="block text-slate-500">${escAttr(t.Dia)} ÀS ${escAttr(t.HoraInicio)}${t.ProfessorNome ? ' · PROF. ' + escAttr(t.ProfessorNome) : ''}</span>
+            </span>
+            <span class="turma-ordem hidden px-2 py-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold"></span>
+          </label>`).join('');
+        atualizarTurmasMarcadas();
+      } catch (e) {
+        box.innerHTML = '<p class="text-xs text-red-600 font-bold">Erro ao carregar as turmas. Recarregue a página.</p>';
+        showToast('Não foi possível carregar as turmas. Tente novamente em instantes.', 'error');
+      }
+    }
+
+    function escAttr(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function onTurmaToggle(cb) {
+      if (cb.checked) {
+        if (turmasMarcadas.length >= MAX_TURMAS) {
+          cb.checked = false;
+          return showToast(`Você pode marcar no máximo ${MAX_TURMAS} turmas.`, 'error');
+        }
+        turmasMarcadas.push(cb.value);
+      } else {
+        turmasMarcadas = turmasMarcadas.filter(id => id !== cb.value);
+      }
+      atualizarTurmasMarcadas();
+    }
+
+    function atualizarTurmasMarcadas() {
+      document.querySelectorAll('#reg-turmas-list .turma-opt').forEach(lbl => {
+        const pos = turmasMarcadas.indexOf(lbl.dataset.turma);
+        const badge = lbl.querySelector('.turma-ordem');
+        const cb = lbl.querySelector('input');
+        cb.checked = pos > -1;
+        badge.classList.toggle('hidden', pos === -1);
+        badge.textContent = pos > -1 ? `${pos + 1}ª OPÇÃO` : '';
+        lbl.classList.toggle('border-brand-500', pos > -1);
+        lbl.classList.toggle('bg-brand-50', pos > -1);
+        // Ao atingir o limite, as demais ficam desabilitadas
+        const bloquear = pos === -1 && turmasMarcadas.length >= MAX_TURMAS;
+        cb.disabled = bloquear;
+        lbl.classList.toggle('opacity-50', bloquear);
+      });
+      const info = document.getElementById('reg-turmas-info');
+      if (info) info.textContent = turmasMarcadas.length
+        ? `${turmasMarcadas.length} de ${MAX_TURMAS} turma(s) marcada(s). Desmarque e marque de novo para mudar a ordem.`
+        : 'Nenhuma turma marcada.';
+    }
+
+    function toggleFormUnlock() {
+      const lgpd = document.getElementById('term-lgpd').checked;
+      const video = document.getElementById('term-video').checked;
+      const form = document.getElementById('student-reg-form');
+      const submitBtn = document.getElementById('reg-submit-btn');
+      const alertBox = document.getElementById('terms-alert');
+
+      if (lgpd && video) {
+        form.classList.remove('opacity-50', 'pointer-events-none');
+        submitBtn.disabled = false;
+        alertBox.className = "mt-4 p-3 bg-emerald-100 border border-emerald-300 rounded-xl text-emerald-900 text-xs sm:text-sm flex items-center gap-2 font-medium";
+        alertBox.innerHTML = `<i class="fa-solid fa-lock-open text-emerald-700 text-base"></i> <span>Termos aceitos! Formulário liberado para preenchimento.</span>`;
+      } else {
+        form.classList.add('opacity-50', 'pointer-events-none');
+        submitBtn.disabled = true;
+        alertBox.className = "mt-4 p-3 bg-amber-100 border border-amber-300 rounded-xl text-amber-900 text-xs sm:text-sm flex items-center gap-2 font-medium";
+        alertBox.innerHTML = `<i class="fa-solid fa-lock text-amber-700 text-base"></i> <span>Você precisa marcar as <strong>duas caixas de seleção acima</strong> para liberar o preenchimento do formulário.</span>`;
+      }
+    }
+
+    let enviando = false, ultimoEnvio = 0;
+
+    async function submitStudentForm(e) {
+      e.preventDefault();
+      // Evita envio duplicado por duplo clique / Enter repetido
+      if (enviando || Date.now() - ultimoEnvio < 1500) return;
+      const btn = document.getElementById('reg-submit-btn');
+      if (!turmasMarcadas.length) return showToast('Marque pelo menos uma turma.', 'error');
+      const tel = document.getElementById('reg-phone').value.replace(/\D/g, '');
+      if (tel.length < 10) return showToast('Informe o telefone com DDD.', 'error');
+
+      const cadastro = {
+        Nome: document.getElementById('reg-nome').value.toUpperCase().trim(),
+        Telefone: document.getElementById('reg-phone').value.trim(),
+        Estado: document.getElementById('reg-uf').value,
+        Cidade: document.getElementById('reg-cidade').value,
+        Comum: document.getElementById('reg-comum').value.toUpperCase().trim(),
+        Cargo: document.getElementById('reg-cargo').value,
+        Damig: document.getElementById('reg-damig').value,
+        Turmas: [...turmasMarcadas],
+        PagamentoOpcao: document.getElementById('reg-pagamento-opcao').value,
+        DataPrevista: document.getElementById('reg-pagamento-data').value,
+        AceiteLGPD: document.getElementById('term-lgpd').checked,
+        AceiteVideo: document.getElementById('term-video').checked
+      };
+
+      const original = btn.innerHTML;
+      enviando = true;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ENVIANDO...';
+      try {
+        await apiCall('saveCadastro', { cadastro });
+        showToast("Inscrição enviada com sucesso! Aguarde o contato da coordenação.");
+        document.getElementById('student-reg-form').reset();
+        document.getElementById('reg-cidade').innerHTML = '<option value="">SELECIONE PRIMEIRO O ESTADO</option>';
+        document.getElementById('reg-cidade').disabled = true;
+        document.getElementById('term-lgpd').checked = false;
+        document.getElementById('term-video').checked = false;
+        turmasMarcadas = [];
+        atualizarTurmasMarcadas();
+      } catch (err) {
+        showToast(err.message || 'Erro ao enviar. Tente novamente.', 'error');
+      } finally {
+        enviando = false;
+        ultimoEnvio = Date.now();
+        btn.innerHTML = original;
+        toggleFormUnlock();
+      }
+    }
+  </script>
+</body>
+</html>
